@@ -1,0 +1,41 @@
+{
+  "name": "akko",
+  "version": "1.0.0",
+  "description": "Canvas-based music visualising framework built for browsers.",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify ./lib/Akko.js -o ./dist/akko.js -t [ babelify --presets [ es2015 ] ]",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TimboKZ/Akko.git"
+  },
+  "keywords": [
+    "music",
+    "visualising",
+    "visualizer",
+    "browser",
+    "canvas",
+    "d3",
+    "audio"
+  ],
+  "author": "Timur Kuzhagaliyev",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/TimboKZ/Akko/issues"
+  },
+  "homepage": "https://github.com/TimboKZ/Akko#readme",
+  "dependencies": {
+    "three": "^0.86.0"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "babel-preset-env": "^1.6.0",
+    "gulp-sourcemaps": "^2.6.0",
+    "gulp-concat": "^2.6.1",
+    "gulp-uglify": "^3.0.0",
+    "gulp-rename": "^1.2.2"
+  }
+}
