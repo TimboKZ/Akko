@@ -4,22 +4,27 @@
         <meta charset="UTF-8">
         <title>Full screen example | Akko Music Visualising Framework</title>
         <style>
-            body {
+            body, html {
+                overflow: hidden;
+                height: 100%;
                 margin: 0;
             }
             canvas {
+                height: 100%;
                 width: 100%;
-                height: 100%
             }
         </style>
     </head>
     <body>
-        <canvas id="canvas"></canvas>
+        <div id="akko"></div>
 
+        <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/86/three.min.js"></script>
         <script src="../dist/akko.js"></script>
         <script>
             var akko = new Akko();
+            akko.addToQueue('./audio/bensound-dubstep.mp3');
+            akko.start();
         </script>
     </body>
 </html>

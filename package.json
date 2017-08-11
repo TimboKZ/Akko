@@ -1,11 +1,12 @@
 {
   "name": "akko",
   "version": "1.0.0",
-  "description": "Canvas-based music visualising framework built for browsers.",
+  "description": "Music visualising framework based on WebGL and Web Audio API.",
   "main": "index.js",
   "scripts": {
     "build": "browserify ./lib/Akko.js -o ./dist/akko.js -t [ babelify --presets [ es2015 ] ]",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "examples": "http-server"
   },
   "repository": {
     "type": "git",
@@ -13,12 +14,14 @@
   },
   "keywords": [
     "music",
-    "visualising",
+    "webaudio",
+    "visualizing",
     "visualizer",
     "browser",
     "canvas",
-    "d3",
-    "audio"
+    "threejs",
+    "audio",
+    "akko"
   ],
   "author": "Timur Kuzhagaliyev",
   "license": "GPL-3.0",
@@ -27,15 +30,15 @@
   },
   "homepage": "https://github.com/TimboKZ/Akko#readme",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "three": "^0.86.0"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
     "babel-preset-env": "^1.6.0",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-uglify": "^3.0.0",
-    "gulp-rename": "^1.2.2"
+    "http-server": "^0.10.0",
+    "webpack": "^3.4.1",
+    "whatwg-fetch": "^2.0.3"
   }
 }
