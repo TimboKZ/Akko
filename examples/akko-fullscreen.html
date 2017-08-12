@@ -23,6 +23,7 @@
         <script src="../dist/akko.js"></script>
         <script>
             var akko = new Akko();
+            akko.addVisualiser(new Akko.visualisers.RingVisualiser());
             akko.addToQueue('./audio/bensound-dubstep.mp3');
             akko.start();
         </script>

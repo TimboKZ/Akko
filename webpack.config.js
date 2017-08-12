@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: ['whatwg-fetch', path.resolve(__dirname, 'lib', 'Akko.js')],
+    entry: ['whatwg-fetch', path.resolve(__dirname, 'index.js')],
     externals: {
         three: 'THREE',
     },

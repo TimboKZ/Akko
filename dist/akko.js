@@ -61,7 +61,7 @@ var Akko =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,14 +72,231 @@ module.exports = THREE;
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-__webpack_require__(2);
-module.exports = __webpack_require__(3);
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
 
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(4);
+module.exports = __webpack_require__(5);
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports) {
 
 (function(self) {
@@ -546,7 +763,28 @@ module.exports = __webpack_require__(3);
 
 
 /***/ }),
-/* 3 */
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Akko = __webpack_require__(6);
+var RingVisualiser = __webpack_require__(13);
+
+module.exports = Akko;
+module.exports.visualisers = {
+  RingVisualiser: RingVisualiser
+};
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -564,8 +802,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var THREE = __webpack_require__(0);
 
-var MusicPlayer = __webpack_require__(4);
-var ThreeWrapper = __webpack_require__(5);
+var MusicPlayer = __webpack_require__(7);
+var ThreeWrapper = __webpack_require__(12);
 
 /**
  * @type {{containerId: string, defaultVisualizers: boolean}}
@@ -600,8 +838,9 @@ var Akko = function () {
         this.AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!this.AudioContext) throw new Error('Akko could not find `AudioContext`! Is it supported in your browser?');
 
-        this.musicPlayer = new MusicPlayer(this.AudioContext);
         this.options = mergeOptions(options);
+        this.musicPlayer = new MusicPlayer(this.AudioContext);
+        this.visualisers = [];
     }
 
     /**
@@ -614,10 +853,21 @@ var Akko = function () {
         value: function start() {
             this.container = document.getElementById(this.options.containerId);
             if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
-            this.threeWrapper = new ThreeWrapper(this.container);
             this.musicPlayer.start();
+            this.threeWrapper = new ThreeWrapper(this.container);
+            this.threeWrapper.setVisualiser(this.visualisers[0]);
             this.threeWrapper.start();
             this.setupListeners();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'addVisualiser',
+        value: function addVisualiser(visualiser) {
+            this.visualisers.push(visualiser);
         }
 
         /**
@@ -669,18 +919,16 @@ var Akko = function () {
             event.preventDefault();
             var files = event.dataTransfer.files;
 
-            for (var i = 0, file; file = files[i]; i++) {
-
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
                 if (file.type.match(/image.*/)) {
                     var reader = new FileReader();
-
                     reader.onload = function (e2) {
                         // finished reading file data.
                         var img = document.createElement('img');
                         img.src = e2.target.result;
                         document.body.appendChild(img);
                     };
-
                     reader.readAsDataURL(file); // start reading the file data.
                 }
             }
@@ -693,7 +941,7 @@ var Akko = function () {
 module.exports = Akko;
 
 /***/ }),
-/* 4 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -716,6 +964,8 @@ var MusicPlayer = function () {
         _classCallCheck(this, MusicPlayer);
 
         this.context = new AudioContext();
+        this.analyser = this.context.createAnalyser();
+        this.analyser.fftSize = 2048;
         this.source = this.context.createBufferSource();
         this.queue = [];
     }
@@ -728,9 +978,11 @@ var MusicPlayer = function () {
             this.prepareNextItem().then(function (audioBuffer) {
                 _this.source.buffer = audioBuffer;
                 _this.source.connect(_this.context.destination);
+                _this.source.connect(_this.analyser);
+                _this.analyser.connect(_this.context.destination);
                 _this.source.start();
             }).catch(function (error) {
-                console.error('Whoops, could load next queue item:', error);
+                console.error('Whoops, could load the next queue item:', error);
             });
         }
     }, {
@@ -770,305 +1022,6 @@ var MusicPlayer = function () {
 }();
 
 module.exports = MusicPlayer;
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-
-var ThreeWrapper = function () {
-    function ThreeWrapper(parentElement) {
-        _classCallCheck(this, ThreeWrapper);
-
-        this.parentElement = parentElement;
-        this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.parentElement.appendChild(this.renderer.domElement);
-
-        this.currentScene = null;
-        this.currentCamera = null;
-    }
-
-    _createClass(ThreeWrapper, [{
-        key: 'start',
-        value: function start() {
-            this.setupListeners();
-            this.currentScene = this.getDefaultScene();
-            this.currentCamera = this.getDefaultCamera();
-            this.renderLoop();
-        }
-    }, {
-        key: 'setupListeners',
-        value: function setupListeners() {
-            window.addEventListener('resize', this.onWindowResize.bind(this), false);
-        }
-    }, {
-        key: 'renderLoop',
-        value: function renderLoop() {
-            requestAnimationFrame(this.renderLoop.bind(this));
-            this.renderer.render(this.currentScene, this.currentCamera);
-        }
-    }, {
-        key: 'getDefaultScene',
-        value: function getDefaultScene() {
-            var scene = new THREE.Scene();
-            var geometry = new THREE.BoxGeometry(1, 1, 1);
-            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            var cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
-            return scene;
-        }
-    }, {
-        key: 'getDefaultCamera',
-        value: function getDefaultCamera() {
-            var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
-            return camera;
-        }
-    }, {
-        key: 'onWindowResize',
-        value: function onWindowResize() {
-            this.currentCamera.aspect = window.innerWidth / window.innerHeight;
-            this.currentCamera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-    }]);
-
-    return ThreeWrapper;
-}();
-
-module.exports = ThreeWrapper;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
 
 /***/ }),
 /* 8 */
@@ -6693,7 +6646,7 @@ module.exports = ret;
 
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7), __webpack_require__(6), __webpack_require__(9).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(1), __webpack_require__(9).setImmediate))
 
 /***/ }),
 /* 9 */
@@ -6946,7 +6899,7 @@ exports.clearImmediate = global.clearImmediate;
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6), __webpack_require__(7)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1), __webpack_require__(2)))
 
 /***/ }),
 /* 11 */
@@ -6966,7 +6919,326 @@ if (typeof window !== "undefined") {
 
 module.exports = win;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+
+var ThreeWrapper = function () {
+    function ThreeWrapper(parentElement) {
+        _classCallCheck(this, ThreeWrapper);
+
+        this.parentElement = parentElement;
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.canvas = this.renderer.domElement;
+        this.parentElement.appendChild(this.canvas);
+
+        this.visualiser = null;
+        this.currentScene = null;
+        this.currentCamera = null;
+    }
+
+    _createClass(ThreeWrapper, [{
+        key: 'start',
+        value: function start() {
+            this.setupListeners();
+            this.currentScene = this.getDefaultScene();
+            this.currentCamera = this.getDefaultCamera();
+            this.renderLoop();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'setVisualiser',
+        value: function setVisualiser(visualiser) {
+            if (visualiser) {
+                var width = this.canvas.clientWidth;
+                var height = this.canvas.clientHeight;
+                if (!visualiser.isInitialised()) visualiser.init(this.renderer, width, height);else if (visualiser.isPaused()) visualiser.revive();
+                visualiser.resize(this.renderer, width, height);
+            }
+            if (this.visualiser) this.visualiser.pause();
+            this.visualiser = visualiser;
+        }
+    }, {
+        key: 'setupListeners',
+        value: function setupListeners() {
+            this.renderer.domElement.addEventListener('resize', this.onCanvasResize.bind(this), false);
+        }
+    }, {
+        key: 'renderLoop',
+        value: function renderLoop() {
+            if (this.visualiser) this.visualiser.update(this.renderer);else this.renderer.render(this.currentScene, this.currentCamera);
+            requestAnimationFrame(this.renderLoop.bind(this));
+        }
+    }, {
+        key: 'getDefaultScene',
+        value: function getDefaultScene() {
+            var scene = new THREE.Scene();
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            var cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            return scene;
+        }
+    }, {
+        key: 'getDefaultCamera',
+        value: function getDefaultCamera() {
+            var width = this.canvas.clientWidth;
+            var height = this.canvas.clientHeight;
+            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 5;
+            return camera;
+        }
+    }, {
+        key: 'onCanvasResize',
+        value: function onCanvasResize() {
+            var width = this.canvas.clientWidth;
+            var height = this.canvas.clientHeight;
+            this.canvas.width = width;
+            this.canvas.height = height;
+            this.renderer.setViewport(0, 0, width, height);
+            if (this.visualiser) this.visualiser.resize(this.renderer, width, height);
+        }
+    }]);
+
+    return ThreeWrapper;
+}();
+
+module.exports = ThreeWrapper;
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var Visualiser = __webpack_require__(14);
+
+var RingVisualiser = function (_Visualiser) {
+    _inherits(RingVisualiser, _Visualiser);
+
+    function RingVisualiser() {
+        _classCallCheck(this, RingVisualiser);
+
+        return _possibleConstructorReturn(this, (RingVisualiser.__proto__ || Object.getPrototypeOf(RingVisualiser)).call(this, 'Rn', 'The Ring'));
+    }
+
+    _createClass(RingVisualiser, [{
+        key: 'onInit',
+        value: function onInit(renderer, width, height) {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            this.camera.position.z = 5;
+
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            this.cube = new THREE.Mesh(geometry, material);
+            this.scene.add(this.cube);
+        }
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(renderer) {
+            this.cube.rotation.x += 0.1;
+            renderer.render(this.scene, this.camera);
+        }
+    }, {
+        key: 'onResize',
+        value: function onResize(renderer, width, height) {
+            this.camera.aspect = width / height;
+            this.camera.updateProjectionMatrix();
+        }
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            delete this.scene;
+        }
+    }]);
+
+    return RingVisualiser;
+}(Visualiser);
+
+module.exports = RingVisualiser;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+/**
+ * @abstract
+ */
+var Visualiser = function () {
+    function Visualiser(code) {
+        var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Untitled Visualiser';
+
+        _classCallCheck(this, Visualiser);
+
+        this.code = code;
+        this.name = name;
+        this.initialised = false;
+        this.paused = false;
+    }
+
+    _createClass(Visualiser, [{
+        key: 'init',
+        value: function init(renderer, width, height) {
+            this.onInit(renderer, width, height);
+            this.initialised = true;
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onInit',
+        value: function onInit(renderer, width, height) {
+            throw new Error('The \'onInit\' method was not defined on ' + this.name + '!');
+        }
+    }, {
+        key: 'revive',
+        value: function revive() {
+            this.onRevive();
+            this.paused = false;
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onRevive',
+        value: function onRevive() {}
+    }, {
+        key: 'update',
+        value: function update(renderer) {
+            this.onUpdate(renderer);
+        }
+
+        /**
+         * @abstract
+         * @param renderer
+         */
+
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(renderer) {
+            throw new Error('The \'onUpdate\' method was not defined on ' + this.name + '!');
+        }
+    }, {
+        key: 'resize',
+        value: function resize(renderer, width, height) {
+            this.onResize(renderer, width, height);
+        }
+
+        /**
+         * @abstract
+         * @param renderer
+         */
+
+    }, {
+        key: 'onResize',
+        value: function onResize(renderer, width, height) {}
+    }, {
+        key: 'pause',
+        value: function pause() {
+            this.onPause();
+            this.paused = true;
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onPause',
+        value: function onPause() {}
+    }, {
+        key: 'destroy',
+        value: function destroy() {
+            this.onDestroy();
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            throw new Error('The \'onDestroy\' method was not defined on ' + this.name + '!');
+        }
+    }, {
+        key: 'error',
+        value: function error(message) {
+            // TODO: Draw error message on canvas
+            throw new Error(message);
+        }
+    }, {
+        key: 'isInitialised',
+        value: function isInitialised() {
+            return this.initialised;
+        }
+    }, {
+        key: 'isPaused',
+        value: function isPaused() {
+            return this.paused;
+        }
+    }]);
+
+    return Visualiser;
+}();
+
+module.exports = Visualiser;
 
 /***/ })
 /******/ ]);
