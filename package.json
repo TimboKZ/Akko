@@ -1,6 +1,6 @@
 {
   "name": "akko",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Music visualising framework based on WebGL and Web Audio API.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,11 @@
     "audio",
     "akko"
   ],
-  "author": "Timur Kuzhagaliyev",
+  "author": {
+    "name": "Timur Kuzhagaluyev",
+    "email": "tim.kuzh@gmail.com",
+    "url": "https://foxypanda.me/"
+  },
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/TimboKZ/Akko/issues"
