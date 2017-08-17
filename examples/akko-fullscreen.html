@@ -3,11 +3,18 @@
     <head>
         <meta charset="UTF-8">
         <title>Full screen example | Akko Music Visualising Framework</title>
+        <link rel="stylesheet" href="../dist/akko.min.css" />
         <style>
             body, html {
+                position: relative;
                 overflow: hidden;
                 height: 100%;
                 margin: 0;
+            }
+            #akko {
+                position: relative;
+                height: 100%;
+                width: 100%;
             }
             canvas {
                 height: 100%;
@@ -23,7 +30,6 @@
         <script src="../dist/akko.js"></script>
         <script>
             var akko = new Akko();
-            akko.addVisualiser(new Akko.visualisers.RingVisualiser());
             akko.addToQueue('./audio/bensound-dubstep.mp3');
             akko.start();
         </script>

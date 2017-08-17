@@ -5,9 +5,7 @@
  */
 
 const Akko = require('./lib/Akko');
-const RingVisualiser = require('./lib/visualisers/RingVisualiser');
+const Visualisers = require('./lib/visualisers');
 
 module.exports = Akko;
-module.exports.visualisers = {
-    RingVisualiser,
-};
+module.exports.visualisers = Visualisers;
