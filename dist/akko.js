@@ -61,7 +61,7 @@ var Akko =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -74,19 +74,36 @@ module.exports = THREE;
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(2);
-__webpack_require__(3);
-module.exports = __webpack_require__(4);
+"use strict";
 
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+module.exports = {
+  BarVisualiser: __webpack_require__(13)
+};
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(3);
+__webpack_require__(4);
+module.exports = __webpack_require__(5);
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 (function(self) {
@@ -553,7 +570,7 @@ module.exports = __webpack_require__(4);
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -565,14 +582,14 @@ module.exports = __webpack_require__(4);
  * @license GPL-3.0
  */
 
-var Akko = __webpack_require__(5);
-var Visualisers = __webpack_require__(15);
+var Akko = __webpack_require__(6);
+var Visualisers = __webpack_require__(1);
 
 module.exports = Akko;
 module.exports.visualisers = Visualisers;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -590,10 +607,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var THREE = __webpack_require__(0);
 
-var MusicPlayer = __webpack_require__(6);
-var ThreeWrapper = __webpack_require__(8);
-var UI = __webpack_require__(9);
-var Visualisers = __webpack_require__(15);
+var MusicPlayer = __webpack_require__(7);
+var ThreeWrapper = __webpack_require__(9);
+var UI = __webpack_require__(11);
+var Visualisers = __webpack_require__(1);
 
 /**
  * @type {{containerId: string, defaultVisualizers: boolean}}
@@ -657,7 +674,8 @@ var Akko = function () {
         key: 'bootstrapUI',
         value: function bootstrapUI() {
             this.ui = new UI({
-                container: this.container
+                container: this.container,
+                musicPlayer: this.musicPlayer
             });
             this.ui.start();
         }
@@ -743,7 +761,7 @@ var Akko = function () {
 module.exports = Akko;
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -759,7 +777,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @license GPL-3.0
  */
 
-var Promise = __webpack_require__(7);
+var Promise = __webpack_require__(8);
 
 var MusicPlayer = function () {
 
@@ -771,41 +789,31 @@ var MusicPlayer = function () {
         _classCallCheck(this, MusicPlayer);
 
         this.context = new data.AudioContext();
-        this.audioElement = data.audioElement;
+        this.gain = this.context.createGain();
+        this.gain.connect(this.context.destination);
         this.analyser = this.context.createAnalyser();
-        this.source = this.context.createBufferSource();
+        this.analyser.connect(this.context.destination);
+
+        this.buffer = null;
+        this.sourceNode = this.context.createBufferSource();
+        this.startedAt = 0;
+        this.pausedAt = 0;
+        this.playing = false;
+
+        this.playbackListeners = [];
+
         this.queue = [];
     }
 
     _createClass(MusicPlayer, [{
         key: 'start',
         value: function start() {
+            this.playNextTrack();
+        }
+    }, {
+        key: 'playNextTrack',
+        value: function playNextTrack() {
             var _this = this;
-
-            this.prepareNextItem().then(function (audioBuffer) {
-                _this.source.buffer = audioBuffer;
-                _this.source.connect(_this.context.destination);
-                _this.source.connect(_this.analyser);
-                _this.analyser.connect(_this.context.destination);
-                _this.source.start();
-            }).catch(function (error) {
-                console.error('Whoops, could load the next queue item:', error);
-            });
-        }
-    }, {
-        key: 'addItem',
-        value: function addItem(item) {
-            this.queue.unshift(item);
-        }
-
-        /**
-         * @return {Promise.<null|Buffer>}
-         */
-
-    }, {
-        key: 'prepareNextItem',
-        value: function prepareNextItem() {
-            var _this2 = this;
 
             var nextItem = this.queue.pop();
             if (!nextItem) return Promise.resolve(null);
@@ -816,12 +824,88 @@ var MusicPlayer = function () {
                 return window.fetch(nextItem).then(function (response) {
                     return response.arrayBuffer();
                 }).then(function (arrayBuffer) {
-                    return _this2.context.decodeAudioData(arrayBuffer);
+                    return _this.context.decodeAudioData(arrayBuffer);
+                }).then(function (audioBuffer) {
+                    _this.buffer = audioBuffer;
+                    _this.stop();
+                    _this.play();
+                    var parts = nextItem.split('/');
+                    var title = parts.pop().replace(/\.[a-zA-Z0-9]+/, '');
+                    for (var i = 0; i < _this.playbackListeners.length; i++) {
+                        _this.playbackListeners[i](title, _this.queue, _this.playing);
+                    }
+                }).catch(function (error) {
+                    console.error('Whoops, could load the next queue item:', error);
                 });
             } else {
                 console.warn('Unsupported queue item type: ', nextItem, ' Skipping!');
-                return this.prepareNextItem();
+                return this.playNextTrack();
             }
+        }
+
+        /**
+         * @callback playbackListener
+         * @param {string} currentTrackTitle
+         * @param {string[]} trackQueue
+         * @param {boolean} playing
+         */
+        /**
+         * @param {playbackListener} listener
+         */
+
+    }, {
+        key: 'addPlaybackListener',
+        value: function addPlaybackListener(listener) {
+            this.playbackListeners.push(listener);
+        }
+    }, {
+        key: 'togglePlayback',
+        value: function togglePlayback() {
+            if (this.playing) {
+                this.pause();
+            } else {
+                this.play();
+            }
+            return this.playing;
+        }
+    }, {
+        key: 'play',
+        value: function play() {
+            var offset = this.pausedAt;
+            this.sourceNode = this.context.createBufferSource();
+            this.sourceNode.connect(this.gain);
+            this.sourceNode.connect(this.analyser);
+            this.sourceNode.buffer = this.buffer;
+            this.sourceNode.start(0, offset);
+            this.startedAt = this.context.currentTime - offset;
+            this.pausedAt = 0;
+            this.playing = true;
+        }
+    }, {
+        key: 'pause',
+        value: function pause() {
+            if (!this.playing) return;
+            var elapsed = this.context.currentTime - this.startedAt;
+            this.stop();
+            this.pausedAt = elapsed;
+        }
+    }, {
+        key: 'stop',
+        value: function stop() {
+            if (!this.playing) return;
+            if (this.sourceNode) {
+                this.sourceNode.disconnect();
+                this.sourceNode.stop(0);
+                this.sourceNode = null;
+            }
+            this.pausedAt = 0;
+            this.startedAt = 0;
+            this.playing = false;
+        }
+    }, {
+        key: 'addItem',
+        value: function addItem(item) {
+            this.queue.unshift(item);
         }
     }, {
         key: 'getAnalyser',
@@ -836,13 +920,13 @@ var MusicPlayer = function () {
 module.exports = MusicPlayer;
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 module.exports = Promise;
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -859,7 +943,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 var THREE = __webpack_require__(0);
-var elementResizeEvent = __webpack_require__(16);
+var elementResizeEvent = __webpack_require__(10);
 
 var ThreeWrapper = function () {
 
@@ -873,8 +957,11 @@ var ThreeWrapper = function () {
         _classCallCheck(this, ThreeWrapper);
 
         this.parentElement = data.parentElement;
+        var width = this.parentElement.offsetWidth;
+        var height = this.parentElement.offsetHeight;
+
         this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(width, height);
         this.canvas = this.renderer.domElement;
         this.parentElement.appendChild(this.canvas);
 
@@ -914,13 +1001,15 @@ var ThreeWrapper = function () {
         key: 'prepareVisualiser',
         value: function prepareVisualiser(visualiser) {
             this.analyser.fftSize = visualiser.fftSize;
-            this.frequencyDataArray = new Uint8Array(this.analyser.frequencyBinCount);
+            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
+            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
             var data = {
                 renderer: this.renderer,
                 width: this.canvas.clientWidth,
                 height: this.canvas.clientHeight
             };
-            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive();
+            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
             visualiser.resize(data);
         }
     }, {
@@ -932,10 +1021,14 @@ var ThreeWrapper = function () {
         key: 'renderLoop',
         value: function renderLoop() {
             if (this.visualiser) {
-                if (this.analyser) this.analyser.getByteFrequencyData(this.frequencyDataArray);
+                if (this.analyser) {
+                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
+                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
+                }
                 this.visualiser.update({
                     renderer: this.renderer,
-                    frequencyData: this.frequencyDataArray
+                    frequencyData: this.frequencyDataArray,
+                    timeDomainData: this.timeDomainDataArray
                 });
             } else {
                 this.renderer.render(this.currentScene, this.currentCamera);
@@ -966,11 +1059,12 @@ var ThreeWrapper = function () {
         value: function onParentResize() {
             var width = this.parentElement.offsetWidth;
             var height = this.parentElement.offsetHeight;
-            this.canvas.width = width;
-            this.canvas.height = height;
-            this.canvas.style.width = width + 'px';
-            this.canvas.style.height = height + 'px';
-            this.renderer.setViewport(0, 0, width, height);
+            // this.canvas.width = width;
+            // this.canvas.height = height;
+            this.renderer.setSize(width, height);
+            // this.canvas.style.width = `${width}px`;
+            // this.canvas.style.height = `${height}px`;
+            // this.renderer.setViewport(0, 0, width, height);
             if (this.visualiser) this.visualiser.resize({
                 renderer: this.renderer,
                 width: width,
@@ -985,7 +1079,124 @@ var ThreeWrapper = function () {
 module.exports = ThreeWrapper;
 
 /***/ }),
-/* 9 */
+/* 10 */
+/***/ (function(module, exports) {
+
+var requestFrame = (function () {
+  var window = this
+  var raf = window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    function fallbackRAF(func) {
+      return window.setTimeout(func, 20)
+    }
+  return function requestFrameFunction(func) {
+    return raf(func)
+  }
+})()
+
+var cancelFrame = (function () {
+  var window = this
+  var cancel = window.cancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.clearTimeout
+  return function cancelFrameFunction(id) {
+    return cancel(id)
+  }
+})()
+
+function resizeListener(e) {
+  var win = e.target || e.srcElement
+  if (win.__resizeRAF__) {
+    cancelFrame(win.__resizeRAF__)
+  }
+  win.__resizeRAF__ = requestFrame(function () {
+    var trigger = win.__resizeTrigger__
+    trigger.__resizeListeners__.forEach(function (fn) {
+      fn.call(trigger, e)
+    })
+  })
+}
+
+var exports = function exports(element, fn) {
+  var window = this
+  var document = window.document
+  var isIE
+
+  var attachEvent = document.attachEvent
+  if (typeof navigator !== 'undefined') {
+    isIE = navigator.userAgent.match(/Trident/) ||
+      navigator.userAgent.match(/Edge/)
+  }
+
+  function objectLoad() {
+    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
+    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
+  }
+
+  if (!element.__resizeListeners__) {
+    element.__resizeListeners__ = []
+    if (attachEvent) {
+      element.__resizeTrigger__ = element
+      element.attachEvent('onresize', resizeListener)
+    } else {
+      if (getComputedStyle(element).position === 'static') {
+        element.style.position = 'relative'
+      }
+      var obj = (element.__resizeTrigger__ = document.createElement('object'))
+      obj.setAttribute(
+        'style',
+        'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;'
+      )
+      obj.setAttribute('class', 'resize-sensor')
+      obj.__resizeElement__ = element
+      obj.onload = objectLoad
+      obj.type = 'text/html'
+      if (isIE) {
+        element.appendChild(obj)
+      }
+      obj.data = 'about:blank'
+      if (!isIE) {
+        element.appendChild(obj)
+      }
+    }
+  }
+  element.__resizeListeners__.push(fn)
+}
+
+module.exports = typeof window === 'undefined' ? exports : exports.bind(window)
+
+module.exports.unbind = function (element, fn) {
+  var attachEvent = document.attachEvent
+  if (fn) {
+    element.__resizeListeners__.splice(
+      element.__resizeListeners__.indexOf(fn),
+      1
+    )
+  } else {
+    element.__resizeListeners__ = []
+  }
+  if (!element.__resizeListeners__.length) {
+    if (attachEvent) {
+      element.detachEvent('onresize', resizeListener)
+    } else {
+      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener(
+        'resize',
+        resizeListener
+      )
+      delete element.__resizeTrigger__.contentDocument.defaultView.__resizeTrigger__
+      element.__resizeTrigger__ = !element.removeChild(
+        element.__resizeTrigger__
+      )
+    }
+    delete element.__resizeListeners__
+  }
+}
+
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1001,45 +1212,31 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @license GPL-3.0
  */
 
-var _require = __webpack_require__(10),
+var _require = __webpack_require__(12),
     render = _require.render,
-    Component = _require.Component,
     h = _require.h;
+
+var UIComponent = __webpack_require__(16);
 
 var UI = function () {
 
     /**
      * @param {object} data
      * @param {Element} data.container
+     * @param {MusicPlayer} data.musicPlayer
      */
     function UI(data) {
         _classCallCheck(this, UI);
 
         this.container = data.container;
+        this.musicPlayer = data.musicPlayer;
+        this.playing = false;
     }
 
     _createClass(UI, [{
-        key: "start",
+        key: 'start',
         value: function start() {
-            render(h(
-                "div",
-                { className: "akko-ui" },
-                h(
-                    "div",
-                    { className: "akko-ui-queue" },
-                    h(
-                        "div",
-                        { className: "akko-ui-queue-current" },
-                        "Currently playing: ",
-                        h(
-                            "strong",
-                            null,
-                            "Bensound Dubstep"
-                        )
-                    )
-                ),
-                this.audioElement
-            ), this.container);
+            render(h(UIComponent, { musicPlayer: this.musicPlayer }), this.container);
         }
     }]);
 
@@ -1049,7 +1246,7 @@ var UI = function () {
 module.exports = UI;
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2027,8 +2224,169 @@ var preact = {
 
 
 /***/ }),
-/* 11 */,
-/* 12 */
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var Visualiser = __webpack_require__(14);
+
+var BAR_COUNT = 32;
+
+var BarVisualiser = function (_Visualiser) {
+    _inherits(BarVisualiser, _Visualiser);
+
+    function BarVisualiser() {
+        _classCallCheck(this, BarVisualiser);
+
+        return _possibleConstructorReturn(this, (BarVisualiser.__proto__ || Object.getPrototypeOf(BarVisualiser)).call(this, {
+            code: 'Ba',
+            name: 'Bars',
+            fftSize: BAR_COUNT * 2,
+            smoothingTimeConstant: 0.9
+        }));
+    }
+
+    _createClass(BarVisualiser, [{
+        key: 'onInit',
+        value: function onInit(data) {
+            this.setupSceneAndCamera(data);
+            this.prepareRenderer(data);
+            this.setupLights(data);
+            this.setupPlane(data);
+            this.setupBars(data);
+        }
+    }, {
+        key: 'prepareRenderer',
+        value: function prepareRenderer(data) {
+            data.renderer.shadowMap.enabled = true;
+            data.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        }
+    }, {
+        key: 'setupSceneAndCamera',
+        value: function setupSceneAndCamera(data) {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+            this.camera.position.set(0, 15, 17);
+            this.camera.rotation.x = -Math.PI / 4;
+            this.cameraPivot = new THREE.Object3D();
+            this.cameraPivot.add(this.camera);
+            this.cameraPivot.castShadow = true;
+            this.scene.add(this.cameraPivot);
+        }
+    }, {
+        key: 'setupLights',
+        value: function setupLights() {
+            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            this.scene.add(ambientLight);
+        }
+    }, {
+        key: 'setupPlane',
+        value: function setupPlane() {
+            var planeGeometry = new THREE.PlaneGeometry(200, 200, 1);
+            var planeMaterial = new THREE.MeshPhongMaterial({ color: 0x444444, side: THREE.DoubleSide });
+            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.receiveShadow = true;
+            plane.rotation.x = Math.PI / 2;
+            this.scene.add(plane);
+        }
+    }, {
+        key: 'setupBars',
+        value: function setupBars() {
+            this.bars = [];
+            this.lights = [];
+            this.cubeLights = [];
+            var step = 2 * Math.PI / BAR_COUNT;
+            var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
+            var radius = 5;
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var color = 0xff0000 + i * 5;
+                var bar = new THREE.Object3D();
+                var material = new THREE.MeshLambertMaterial({ color: color });
+                var cube = new THREE.Mesh(geometry, material);
+                var cubeLight = new THREE.PointLight(color, 0, 4);
+                cubeLight.position.y = 7;
+                cubeLight.position.x = -1;
+                cube.add(cubeLight);
+                var light = new THREE.PointLight(color, 0, 10);
+                light.position.y = 1;
+                light.position.x = 10;
+                bar.add(light);
+                bar.add(cube);
+                bar.position.x = radius;
+                cube.position.y = -4.8;
+                var pivot = new THREE.Object3D();
+                pivot.rotation.y = step * i;
+                pivot.add(bar);
+                this.scene.add(pivot);
+                this.bars.push(cube);
+                this.lights.push(light);
+                this.cubeLights.push(cubeLight);
+            }
+        }
+    }, {
+        key: 'onRevive',
+        value: function onRevive(data) {
+            this.prepareRenderer(data);
+        }
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(data) {
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var bar = this.bars[i];
+                var light = this.lights[i];
+                var cubeLight = this.cubeLights[i];
+                var frequency = Math.abs(data.frequencyData[i]);
+                var timeDomain = data.timeDomainData[i];
+
+                var value = frequency * timeDomain;
+                if (value === Infinity || value === -Infinity) continue;
+                var newY = bar.position.y + (value - bar.position.y) / 30;
+                if (isNaN(newY)) continue;
+
+                light.intensity = Math.max(0, newY);
+                cubeLight.intensity = Math.max(0, newY) * 0.5;
+                bar.position.y = newY;
+            }
+            this.cameraPivot.rotation.y += 0.01;
+            data.renderer.render(this.scene, this.camera);
+        }
+    }, {
+        key: 'onResize',
+        value: function onResize(data) {
+            this.camera.aspect = data.width / data.height;
+            this.camera.updateProjectionMatrix();
+        }
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            delete this.scene;
+        }
+    }]);
+
+    return BarVisualiser;
+}(Visualiser);
+
+module.exports = BarVisualiser;
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2048,16 +2406,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @abstract
  */
 var Visualiser = function () {
-    function Visualiser() {
-        var code = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'UV';
-        var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Untitled Visualiser';
-        var fftSize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 128;
 
+    /**
+     * @param {object} data
+     * @param {string} data.code
+     * @param {string} data.name
+     * @param {int} data.fftSize
+     * @param {number} data.smoothingTimeConstant
+     */
+    function Visualiser(data) {
         _classCallCheck(this, Visualiser);
 
-        this.code = code;
-        this.name = name;
-        this.fftSize = fftSize;
+        this.code = data.code || 'UV';
+        this.name = data.name || 'Untitled Visualiser';
+        this.fftSize = data.fftSize || 128;
+        this.smoothingTimeConstant = data.smoothingTimeConstant || 0;
         this.initialised = false;
         this.paused = false;
     }
@@ -2091,25 +2454,39 @@ var Visualiser = function () {
         value: function onInit(data) {
             throw new Error('The \'onInit\' method was not defined on ' + this.name + '!');
         }
+
+        /**
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+
     }, {
         key: 'revive',
-        value: function revive() {
-            this.onRevive();
+        value: function revive(data) {
+            this.onRevive(data);
             this.paused = false;
         }
 
         /**
          * @abstract
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {number} data.height
+         * @param {number} data.width
          */
+        // eslint-disable-next-line
 
     }, {
         key: 'onRevive',
-        value: function onRevive() {}
+        value: function onRevive(data) {}
 
         /**
          * @param {object} data
          * @param {THREE.WebGLRenderer} data.renderer
-         * @param {Uint8Array} data.frequencyData
+         * @param {Float32Array} data.frequencyData
+         * @param {Float32Array} data.timeDomainData
          */
 
     }, {
@@ -2122,7 +2499,8 @@ var Visualiser = function () {
          * @abstract
          * @param {object} data
          * @param {THREE.WebGLRenderer} data.renderer
-         * @param {Uint8Array} data.frequencyData
+         * @param {Float32Array} data.frequencyData
+         * @param {Float32Array} data.timeDomainData
          */
         // eslint-disable-next-line
 
@@ -2208,8 +2586,8 @@ var Visualiser = function () {
 module.exports = Visualiser;
 
 /***/ }),
-/* 13 */,
-/* 14 */
+/* 15 */,
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2229,203 +2607,88 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @license GPL-3.0
  */
 
-var THREE = __webpack_require__(0);
-var Visualiser = __webpack_require__(12);
+var _require = __webpack_require__(12),
+    Component = _require.Component,
+    h = _require.h;
 
-var BAR_COUNT = 32;
+var UIComponent = function (_Component) {
+    _inherits(UIComponent, _Component);
 
-var BarVisualiser = function (_Visualiser) {
-    _inherits(BarVisualiser, _Visualiser);
+    function UIComponent(props) {
+        _classCallCheck(this, UIComponent);
 
-    function BarVisualiser() {
-        _classCallCheck(this, BarVisualiser);
+        var _this = _possibleConstructorReturn(this, (UIComponent.__proto__ || Object.getPrototypeOf(UIComponent)).call(this, props));
 
-        return _possibleConstructorReturn(this, (BarVisualiser.__proto__ || Object.getPrototypeOf(BarVisualiser)).call(this, 'Ba', 'Bars', BAR_COUNT * 2));
+        _this.state = {
+            currentTrackTitle: null,
+            trackQueue: null,
+            playing: false
+        };
+        props.musicPlayer.addPlaybackListener(_this.playbackListener.bind(_this));
+        return _this;
     }
 
-    _createClass(BarVisualiser, [{
-        key: 'onInit',
-        value: function onInit(data) {
-            this.scene = new THREE.Scene();
-            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 10);
-            this.camera.position.z = 10;
-
-            this.bars = [];
-            var step = 0.5;
-            var geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var material = new THREE.MeshBasicMaterial({ color: 0xff0000 + i * 5 });
-                var cube = new THREE.Mesh(geometry, material);
-                cube.position.set(-8 + i * step, 0, 0);
-                this.scene.add(cube);
-                this.bars.push(cube);
-            }
+    _createClass(UIComponent, [{
+        key: "playbackListener",
+        value: function playbackListener(currentTrackTitle, trackQueue, playing) {
+            var state = this.state;
+            state.currentTrackTitle = currentTrackTitle;
+            state.trackQueue = trackQueue;
+            state.playing = playing;
+            this.setState(state);
         }
     }, {
-        key: 'onUpdate',
-        value: function onUpdate(data) {
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var value = data.frequencyData[i] / 20;
-                if (value === 0) value = 0.0001;
-                this.bars[i].scale.set(1, value, 1);
-            }
-            data.renderer.render(this.scene, this.camera);
+        key: "togglePlayback",
+        value: function togglePlayback(event) {
+            event.preventDefault();
+            var state = this.state;
+            state.playing = this.props.musicPlayer.togglePlayback();
+            this.setState(state);
         }
     }, {
-        key: 'onResize',
-        value: function onResize(data) {
-            var step = 0.5;
-            for (var i = 0; i < BAR_COUNT; i++) {
-                this.bars[i].position.set(-8 + i * step, 0, 0);
-            }
-            this.camera.aspect = data.width / data.height;
-            this.camera.updateProjectionMatrix();
-        }
-    }, {
-        key: 'onDestroy',
-        value: function onDestroy() {
-            delete this.scene;
+        key: "render",
+        value: function render() {
+            return h(
+                "div",
+                { className: "akko-ui" },
+                h(
+                    "div",
+                    { className: "akko-ui-queue" },
+                    h(
+                        "div",
+                        { className: "akko-ui-queue-current" },
+                        "Playing: ",
+                        h(
+                            "strong",
+                            null,
+                            this.state.currentTrackTitle
+                        )
+                    )
+                ),
+                h(
+                    "div",
+                    { className: "akko-ui-controls" },
+                    h(
+                        "a",
+                        { href: "#", alt: "Toggle playback", onClick: this.togglePlayback.bind(this),
+                            className: "akko-ui-controls-play " + (this.state.playing ? 'active' : '') },
+                        this.state.playing ? '❚❚' : '►'
+                    ),
+                    h(
+                        "div",
+                        { className: "akko-ui-controls-progress" },
+                        h("div", { className: "akko-ui-controls-progress-indicator" })
+                    ),
+                    h("div", { className: "akko-ui-controls-volume" })
+                )
+            );
         }
     }]);
 
-    return BarVisualiser;
-}(Visualiser);
+    return UIComponent;
+}(Component);
 
-module.exports = BarVisualiser;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-module.exports = {
-  BarVisualiser: __webpack_require__(14)
-};
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports) {
-
-var requestFrame = (function () {
-  var window = this
-  var raf = window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    function fallbackRAF(func) {
-      return window.setTimeout(func, 20)
-    }
-  return function requestFrameFunction(func) {
-    return raf(func)
-  }
-})()
-
-var cancelFrame = (function () {
-  var window = this
-  var cancel = window.cancelAnimationFrame ||
-    window.mozCancelAnimationFrame ||
-    window.webkitCancelAnimationFrame ||
-    window.clearTimeout
-  return function cancelFrameFunction(id) {
-    return cancel(id)
-  }
-})()
-
-function resizeListener(e) {
-  var win = e.target || e.srcElement
-  if (win.__resizeRAF__) {
-    cancelFrame(win.__resizeRAF__)
-  }
-  win.__resizeRAF__ = requestFrame(function () {
-    var trigger = win.__resizeTrigger__
-    trigger.__resizeListeners__.forEach(function (fn) {
-      fn.call(trigger, e)
-    })
-  })
-}
-
-var exports = function exports(element, fn) {
-  var window = this
-  var document = window.document
-  var isIE
-
-  var attachEvent = document.attachEvent
-  if (typeof navigator !== 'undefined') {
-    isIE = navigator.userAgent.match(/Trident/) ||
-      navigator.userAgent.match(/Edge/)
-  }
-
-  function objectLoad() {
-    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
-    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
-  }
-
-  if (!element.__resizeListeners__) {
-    element.__resizeListeners__ = []
-    if (attachEvent) {
-      element.__resizeTrigger__ = element
-      element.attachEvent('onresize', resizeListener)
-    } else {
-      if (getComputedStyle(element).position === 'static') {
-        element.style.position = 'relative'
-      }
-      var obj = (element.__resizeTrigger__ = document.createElement('object'))
-      obj.setAttribute(
-        'style',
-        'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;'
-      )
-      obj.setAttribute('class', 'resize-sensor')
-      obj.__resizeElement__ = element
-      obj.onload = objectLoad
-      obj.type = 'text/html'
-      if (isIE) {
-        element.appendChild(obj)
-      }
-      obj.data = 'about:blank'
-      if (!isIE) {
-        element.appendChild(obj)
-      }
-    }
-  }
-  element.__resizeListeners__.push(fn)
-}
-
-module.exports = typeof window === 'undefined' ? exports : exports.bind(window)
-
-module.exports.unbind = function (element, fn) {
-  var attachEvent = document.attachEvent
-  if (fn) {
-    element.__resizeListeners__.splice(
-      element.__resizeListeners__.indexOf(fn),
-      1
-    )
-  } else {
-    element.__resizeListeners__ = []
-  }
-  if (!element.__resizeListeners__.length) {
-    if (attachEvent) {
-      element.detachEvent('onresize', resizeListener)
-    } else {
-      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener(
-        'resize',
-        resizeListener
-      )
-      delete element.__resizeTrigger__.contentDocument.defaultView.__resizeTrigger__
-      element.__resizeTrigger__ = !element.removeChild(
-        element.__resizeTrigger__
-      )
-    }
-    delete element.__resizeListeners__
-  }
-}
-
+module.exports = UIComponent;
 
 /***/ })
 /******/ ]);

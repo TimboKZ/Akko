@@ -1,3 +1,32 @@
+
+$background: rgba(255, 255, 255, 0.05)
+$controls-height: 60px
+
+$text: #fff
+$brand: #c75e58
+
+$button-bg: $background
+$button-bg-hover: transparentize(#c75e58, 0.8)
+$button-bg-active: #c75e58
+$button-bg-active-hover: transparentize(#c75e58, 0.2)
+
+@mixin control-button
+  background-color: $button-bg
+  line-height: $controls-height
+  height: $controls-height
+  width: $controls-height
+  text-decoration: none
+  display: inline-block
+  text-align: center
+  font-size: 24px
+  color: $text
+  &.active
+    background-color: $button-bg-active
+    &:hover
+      background-color: $button-bg-active-hover
+  &:hover
+    background-color: $button-bg-hover
+
 .akko-ui
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif
   position: absolute
@@ -5,3 +34,25 @@
   width: 100%
   color: #fff
   z-index: 1
+  opacity: 0.2
+  &:hover
+    opacity: 1
+  &-queue
+    &-current
+      background-color: $background
+      display: inline-block
+      font-size: 1.5rem
+      padding: 20px
+      color: #999
+      strong
+        color: #fff
+
+  &-controls
+    background-color: $background
+    height: $controls-height
+    position: absolute
+    width: 100%
+    bottom: 0
+    left: 0
+    &-play
+      @include control-button
