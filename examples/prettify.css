@@ -1,0 +1,13 @@
+body {
+    font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
+    margin: 40px auto;
+    max-width: 960px;
+    line-height: 1.6;
+    font-size: 18px;
+    padding: 0 10px;
+    color: #444;
+}
+
+h1, h2, h3 {
+    line-height: 1.2;
+}

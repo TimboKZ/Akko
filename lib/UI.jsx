@@ -4,7 +4,9 @@
  * @license GPL-3.0
  */
 
+// eslint-disable-next-line
 const {render, h} = require('preact');
+// eslint-disable-next-line
 const UIComponent = require('./UIComponent.jsx');
 
 class UI {

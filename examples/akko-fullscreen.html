@@ -3,7 +3,11 @@
     <head>
         <meta charset="UTF-8">
         <title>Full screen example | Akko Music Visualising Framework</title>
+
+        <!-- Akko CSS -->
         <link rel="stylesheet" href="../dist/akko.min.css" />
+
+        <!-- Preparing the page for full screen canvas -->
         <style>
             body, html {
                 position: relative;
@@ -16,22 +20,28 @@
                 height: 100%;
                 width: 100%;
             }
-            canvas {
-                height: 100%;
-                width: 100%;
-            }
         </style>
+
     </head>
     <body>
+
+        <!-- Akko's container -->
         <div id="akko"></div>
 
+        <!-- Akko's dependencies -->
         <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/86/three.min.js"></script>
+
+        <!-- Akko JS -->
         <script src="../dist/akko.js"></script>
+
+        <!-- Starting Akko -->
         <script>
             var akko = new Akko();
-            akko.addToQueue('./audio/Fatal Force - Fan Girls.wav');
+            akko.addTrack('./audio/Fatal Force - Fan Girls.mp3');
+            akko.addTrack('./audio/Computer Music All-Stars - Albatross v2.mp3');
             akko.start();
         </script>
+
     </body>
 </html>

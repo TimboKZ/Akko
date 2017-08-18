@@ -1062,7 +1062,8 @@ var preact = {
  */
 
 module.exports = {
-  BarVisualiser: __webpack_require__(14)
+  BarVisualiser: __webpack_require__(14),
+  RingVisualiser: __webpack_require__(19)
 };
 
 /***/ }),
@@ -1627,10 +1628,21 @@ var Akko = function () {
         this.musicPlayer = new MusicPlayer({
             AudioContext: this.AudioContext
         });
-        this.visualisers = this.options.defaultVisualizers ? [new Visualisers.BarVisualiser()] : [];
+        this.visualisers = this.options.defaultVisualizers ? this.prepareDefautVisualisers() : [];
     }
 
     _createClass(Akko, [{
+        key: 'prepareDefautVisualisers',
+        value: function prepareDefautVisualisers() {
+            var visualisers = [];
+            for (var key in Visualisers) {
+                if (!Visualisers.hasOwnProperty(key)) continue;
+                var visualiserClass = Visualisers[key];
+                visualisers.push(new visualiserClass());
+            }
+            return visualisers;
+        }
+    }, {
         key: 'start',
         value: function start() {
             this.container = document.getElementById(this.options.containerId);
@@ -1669,14 +1681,14 @@ var Akko = function () {
         }
 
         /**
-         * TODO: Extend JSDoc to Web Audio files
-         * @param {string} item
+         * @param {string|File|ArrayBuffer} item
+         * @param {string} [title]
          */
 
     }, {
-        key: 'addToQueue',
-        value: function addToQueue(item) {
-            this.musicPlayer.addItem(item);
+        key: 'addTrack',
+        value: function addTrack(item, title) {
+            this.musicPlayer.addTrack(item, title);
         }
 
         /**
@@ -1719,15 +1731,8 @@ var Akko = function () {
 
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                if (file.type.match(/image.*/)) {
-                    var reader = new FileReader();
-                    reader.onload = function (e2) {
-                        // finished reading file data.
-                        var img = document.createElement('img');
-                        img.src = e2.target.result;
-                        document.body.appendChild(img);
-                    };
-                    reader.readAsDataURL(file); // start reading the file data.
+                if (file.type.match(/audio.*/)) {
+                    this.musicPlayer.addTrack(file);
                 }
             }
         }
@@ -1756,6 +1761,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 var Promise = __webpack_require__(9);
+var Track = __webpack_require__(18);
+
+var PlayerStates = {
+    LOADING: 'Loading...',
+    READY: 'Ready!',
+    PLAYING: 'Playing...',
+    PAUSED: 'Paused.',
+    FINISHED: 'Finished!'
+};
 
 var MusicPlayer = function () {
 
@@ -1779,12 +1793,37 @@ var MusicPlayer = function () {
         this.pausedAt = 0;
         this.playing = false;
 
-        this.playbackListeners = [];
+        /**
+         * @callback playbackListener
+         * @param {string} playerState
+         * @param {Track[]} trackList
+         * @param {int} currentTrackIndex
+         */
+        /** @type {playbackListener[]} */
+        this.listeners = [];
 
-        this.queue = [];
+        /** @type {Track[]} */
+        this.trackList = [];
+        this.currentTrackIndex = -1;
+
+        this.setState(PlayerStates.READY);
     }
 
     _createClass(MusicPlayer, [{
+        key: 'setState',
+        value: function setState(newState) {
+            this.state = newState;
+            this.notifyListeners();
+        }
+    }, {
+        key: 'notifyListeners',
+        value: function notifyListeners() {
+            for (var i = 0; i < this.listeners.length; i++) {
+                var listener = this.listeners[i];
+                listener(this.state, this.trackList, this.currentTrackIndex);
+            }
+        }
+    }, {
         key: 'start',
         value: function start() {
             this.playNextTrack();
@@ -1792,50 +1831,44 @@ var MusicPlayer = function () {
     }, {
         key: 'playNextTrack',
         value: function playNextTrack() {
+            var nextTrackIndex = this.currentTrackIndex + 1;
+            if (nextTrackIndex >= this.trackList.length) {
+                this.setState(PlayerStates.FINISHED);
+            }
+            this.playTrack(nextTrackIndex);
+        }
+    }, {
+        key: 'playTrack',
+        value: function playTrack(index) {
             var _this = this;
 
-            var nextItem = this.queue.pop();
-            if (!nextItem) return Promise.resolve(null);
-
-            // TODO: Add support for other types.
-
-            if (typeof nextItem === 'string') {
-                return window.fetch(nextItem).then(function (response) {
-                    return response.arrayBuffer();
-                }).then(function (arrayBuffer) {
-                    return _this.context.decodeAudioData(arrayBuffer);
-                }).then(function (audioBuffer) {
-                    _this.buffer = audioBuffer;
-                    _this.stop();
-                    _this.play();
-                    var parts = nextItem.split('/');
-                    var title = parts.pop().replace(/\.[a-zA-Z0-9]+/, '');
-                    for (var i = 0; i < _this.playbackListeners.length; i++) {
-                        _this.playbackListeners[i](title, _this.queue, _this.playing);
-                    }
-                }).catch(function (error) {
-                    console.error('Whoops, could load the next queue item:', error);
-                });
-            } else {
-                console.warn('Unsupported queue item type: ', nextItem, ' Skipping!');
-                return this.playNextTrack();
-            }
+            this.setState(PlayerStates.LOADING);
+            var track = this.trackList[index];
+            Promise.resolve().then(function () {
+                return track.prepareArrayBuffer();
+            }).then(function (arrayBuffer) {
+                return _this.context.decodeAudioData(arrayBuffer);
+            }).then(function (audioBuffer) {
+                _this.buffer = audioBuffer;
+                _this.stop();
+                _this.play();
+                _this.currentTrackIndex = index;
+                _this.setState(PlayerStates.PLAYING);
+            }).catch(function (error) {
+                console.error('Error preparing track:', error);
+                console.warn('Skipping \'' + track.title + '\'!');
+                return _this.playNextTrack();
+            });
         }
 
-        /**
-         * @callback playbackListener
-         * @param {string} currentTrackTitle
-         * @param {string[]} trackQueue
-         * @param {boolean} playing
-         */
         /**
          * @param {playbackListener} listener
          */
 
     }, {
-        key: 'addPlaybackListener',
-        value: function addPlaybackListener(listener) {
-            this.playbackListeners.push(listener);
+        key: 'addListener',
+        value: function addListener(listener) {
+            this.listeners.push(listener);
         }
     }, {
         key: 'togglePlayback',
@@ -1855,10 +1888,12 @@ var MusicPlayer = function () {
             this.sourceNode.connect(this.gain);
             this.sourceNode.connect(this.analyser);
             this.sourceNode.buffer = this.buffer;
+            this.sourceNode.onended = this.ended.bind(this);
             this.sourceNode.start(0, offset);
             this.startedAt = this.context.currentTime - offset;
             this.pausedAt = 0;
             this.playing = true;
+            this.setState(PlayerStates.PLAYING);
         }
     }, {
         key: 'pause',
@@ -1867,6 +1902,7 @@ var MusicPlayer = function () {
             var elapsed = this.context.currentTime - this.startedAt;
             this.stop();
             this.pausedAt = elapsed;
+            this.setState(PlayerStates.PAUSED);
         }
     }, {
         key: 'stop',
@@ -1882,9 +1918,19 @@ var MusicPlayer = function () {
             this.playing = false;
         }
     }, {
-        key: 'addItem',
-        value: function addItem(item) {
-            this.queue.unshift(item);
+        key: 'ended',
+        value: function ended() {
+            this.playNextTrack();
+        }
+    }, {
+        key: 'addTrack',
+        value: function addTrack(item, title) {
+            var track = new Track({
+                source: item,
+                title: title
+            });
+            this.trackList.push(track);
+            this.notifyListeners();
         }
     }, {
         key: 'getAnalyser',
@@ -1897,6 +1943,7 @@ var MusicPlayer = function () {
 }();
 
 module.exports = MusicPlayer;
+module.exports.States = PlayerStates;
 
 /***/ }),
 /* 9 */
@@ -2195,9 +2242,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @license GPL-3.0
  */
 
+// eslint-disable-next-line
 var _require = __webpack_require__(1),
     render = _require.render,
     h = _require.h;
+// eslint-disable-next-line
+
 
 var UIComponent = __webpack_require__(13);
 
@@ -2249,9 +2299,12 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @license GPL-3.0
  */
 
+// eslint-disable-next-line
 var _require = __webpack_require__(1),
     Component = _require.Component,
     h = _require.h;
+
+var PlayerStates = __webpack_require__(8).States;
 
 var UIComponent = function (_Component) {
     _inherits(UIComponent, _Component);
@@ -2262,25 +2315,31 @@ var UIComponent = function (_Component) {
         var _this = _possibleConstructorReturn(this, (UIComponent.__proto__ || Object.getPrototypeOf(UIComponent)).call(this, props));
 
         _this.state = {
-            currentTrackTitle: null,
-            trackQueue: null,
-            playing: false
+            playerState: null,
+            trackList: null,
+            currentTrackIndex: null
         };
-        props.musicPlayer.addPlaybackListener(_this.playbackListener.bind(_this));
+        props.musicPlayer.addListener(_this.playbackListener.bind(_this));
         return _this;
     }
 
     _createClass(UIComponent, [{
-        key: "playbackListener",
-        value: function playbackListener(currentTrackTitle, trackQueue, playing) {
-            var state = this.state;
-            state.currentTrackTitle = currentTrackTitle;
-            state.trackQueue = trackQueue;
-            state.playing = playing;
-            this.setState(state);
+        key: 'playbackListener',
+        value: function playbackListener(playerState, trackList, currentTrackIndex) {
+            this.setState({
+                playerState: playerState,
+                trackList: trackList,
+                currentTrackIndex: currentTrackIndex
+            });
         }
     }, {
-        key: "togglePlayback",
+        key: 'playTrack',
+        value: function playTrack(index, event) {
+            event.preventDefault();
+            this.props.musicPlayer.playTrack(index);
+        }
+    }, {
+        key: 'togglePlayback',
         value: function togglePlayback(event) {
             event.preventDefault();
             var state = this.state;
@@ -2288,40 +2347,115 @@ var UIComponent = function (_Component) {
             this.setState(state);
         }
     }, {
-        key: "render",
+        key: 'addTrackByUrl',
+        value: function addTrackByUrl(event) {
+            event.preventDefault();
+            var audioUrl = prompt('Enter the URL of an audio file');
+            if (audioUrl) {
+                this.props.musicPlayer.addTrack(audioUrl);
+            }
+        }
+    }, {
+        key: 'uploadAudioFile',
+        value: function uploadAudioFile(event) {
+            event.preventDefault();
+        }
+    }, {
+        key: 'getTrackList',
+        value: function getTrackList() {
+            var trackList = this.state.trackList;
+            if (trackList) {
+                var tracks = [];
+                for (var i = 0; i < trackList.length; i++) {
+                    var track = trackList[i];
+                    var isActive = this.state.currentTrackIndex === i;
+                    var activeClass = isActive ? 'active' : '';
+                    var symbol = isActive ? this.getPlaybackSymbol() : '#' + (i + 1);
+                    tracks.push(h(
+                        'a',
+                        { href: '#', alt: 'Play track #' + (i + 1), onClick: this.playTrack.bind(this, i),
+                            className: 'akko-ui-track-list-item ' + activeClass },
+                        h(
+                            'span',
+                            null,
+                            symbol
+                        ),
+                        ' ',
+                        track.title
+                    ));
+                }
+                return h(
+                    'div',
+                    { className: 'akko-ui-track-list' },
+                    tracks
+                );
+            } else {
+                return null;
+            }
+        }
+    }, {
+        key: 'getPlaybackSymbol',
+        value: function getPlaybackSymbol() {
+            return !this.isPlaying() ? '❚❚' : '►';
+        }
+    }, {
+        key: 'getPlaybackButtonSymbol',
+        value: function getPlaybackButtonSymbol() {
+            return this.isPlaying() ? '❚❚' : '►';
+        }
+    }, {
+        key: 'isPlaying',
+        value: function isPlaying() {
+            return this.state.playerState === PlayerStates.PLAYING;
+        }
+    }, {
+        key: 'render',
         value: function render() {
             return h(
-                "div",
-                { className: "akko-ui" },
+                'div',
+                { className: 'akko-ui' },
                 h(
-                    "div",
-                    { className: "akko-ui-queue" },
+                    'div',
+                    { className: 'akko-ui-info' },
                     h(
-                        "div",
-                        { className: "akko-ui-queue-current" },
-                        "Playing: ",
+                        'div',
+                        { className: 'akko-ui-player-state' },
+                        this.state.playerState
+                    ),
+                    this.getTrackList(),
+                    h(
+                        'div',
+                        { className: 'akko-ui-add-tracks' },
                         h(
-                            "strong",
-                            null,
-                            this.state.currentTrackTitle
-                        )
+                            'a',
+                            { href: '#', alt: 'Add a track by URL', onClick: this.addTrackByUrl.bind(this) },
+                            'Add track by URL'
+                        ),
+                        ' or ',
+                        h(
+                            'a',
+                            { href: '#', alt: 'Upload an audio file', onClick: this.uploadAudioFile.bind(this) },
+                            'upload audio file'
+                        ),
+                        h('br', null),
+                        'or drag & drop a file into the visualiser.'
                     )
                 ),
                 h(
-                    "div",
-                    { className: "akko-ui-controls" },
+                    'div',
+                    { className: 'akko-ui-controls' },
                     h(
-                        "a",
-                        { href: "#", alt: "Toggle playback", onClick: this.togglePlayback.bind(this),
-                            className: "akko-ui-controls-play " + (this.state.playing ? 'active' : '') },
-                        this.state.playing ? '❚❚' : '►'
+                        'a',
+                        { href: '#', alt: 'Toggle playback', onClick: this.togglePlayback.bind(this),
+                            className: 'akko-ui-controls-play ' + (this.isPlaying() ? 'active' : '') },
+                        this.getPlaybackButtonSymbol()
                     ),
                     h(
-                        "div",
-                        { className: "akko-ui-controls-progress" },
-                        h("div", { className: "akko-ui-controls-progress-indicator" })
+                        'div',
+                        { className: 'akko-ui-controls-progress' },
+                        h('div', { className: 'akko-ui-controls-progress-indicator' })
                     ),
-                    h("div", { className: "akko-ui-controls-volume" })
+                    h('div', { className: 'akko-ui-controls-volume' })
                 )
             );
         }
@@ -2366,7 +2500,7 @@ var BarVisualiser = function (_Visualiser) {
 
         return _possibleConstructorReturn(this, (BarVisualiser.__proto__ || Object.getPrototypeOf(BarVisualiser)).call(this, {
             code: 'Ba',
-            name: 'Bars',
+            name: 'Bars 3D',
             fftSize: BAR_COUNT * 2,
             smoothingTimeConstant: 0.9
         }));
@@ -2385,7 +2519,7 @@ var BarVisualiser = function (_Visualiser) {
         value: function setupSceneAndCamera(data) {
             this.scene = new THREE.Scene();
             this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
-            this.camera.position.set(0, 17, 15);
+            this.camera.position.set(0, 15, 17);
             this.camera.rotation.x = -Math.PI / 4;
             this.cameraPivot = new THREE.Object3D();
             this.cameraPivot.add(this.camera);
@@ -2395,8 +2529,8 @@ var BarVisualiser = function (_Visualiser) {
     }, {
         key: 'setupLights',
         value: function setupLights() {
-            this.ambientLight = new THREE.AmbientLight(0x404040, 0.8);
-            this.scene.add(this.ambientLight);
+            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            this.scene.add(ambientLight);
         }
     }, {
         key: 'setupPlane',
@@ -2416,7 +2550,7 @@ var BarVisualiser = function (_Visualiser) {
             this.cubeLights = [];
             var step = 2 * Math.PI / BAR_COUNT;
             var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
-            var radius = 8;
+            var radius = 5;
             for (var i = 0; i < BAR_COUNT; i++) {
                 var color = 0xff0000 + i * 5;
                 var bar = new THREE.Object3D();
@@ -2445,39 +2579,22 @@ var BarVisualiser = function (_Visualiser) {
     }, {
         key: 'onUpdate',
         value: function onUpdate(data) {
-            var timeDomainAverage = 0;
-            var hslStep = 1 / BAR_COUNT;
             for (var i = 0; i < BAR_COUNT; i++) {
                 var bar = this.bars[i];
                 var light = this.lights[i];
                 var cubeLight = this.cubeLights[i];
                 var frequency = Math.abs(data.frequencyData[i]);
                 var timeDomain = data.timeDomainData[i];
-                timeDomainAverage += timeDomain;
 
-                var value = frequency * timeDomain / 3;
+                var value = frequency * timeDomain;
                 if (value === Infinity || value === -Infinity) continue;
                 var newY = bar.position.y + (value - bar.position.y) / 30;
                 if (isNaN(newY)) continue;
 
-                var initialBarColor = bar.material.color.getHex();
-                var targetBarColor = 0xffffff * timeDomain;
-                var barColor = this.lerp(initialBarColor, targetBarColor, 0.0001);
-
-                bar.material.color.setHSL(hslStep * i, 1, 0.5);
-
                 light.intensity = Math.max(0, newY);
-                light.position.x = timeDomain * 5;
                 cubeLight.intensity = Math.max(0, newY) * 0.5;
-                var newScaleX = (timeDomain + 1) * 4;
-                bar.scale.x = this.lerp(bar.scale.x, newScaleX, 0.5);
-                bar.position.y = this.lerp(bar.position.y, newY, 0.5);
+                bar.position.y = newY;
             }
-            timeDomainAverage /= BAR_COUNT;
-            console.log(timeDomainAverage);
-            var newIntensity = Math.abs(timeDomainAverage) * 2 + 1;
-            this.ambientLight.intensity = this.lerp(this.ambientLight.intensity, newIntensity, 0.1);
-
             this.cameraPivot.rotation.y += 0.01;
             data.renderer.render(this.scene, this.camera);
         }
@@ -2520,7 +2637,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @license GPL-3.0
  */
 
-var Helper = __webpack_require__(17);
+var Helper = __webpack_require__(16);
 
 /**
  * @abstract
@@ -2711,8 +2828,7 @@ var Visualiser = function (_Helper) {
 module.exports = Visualiser;
 
 /***/ }),
-/* 16 */,
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2736,7 +2852,13 @@ var Helper = function () {
     _createClass(Helper, [{
         key: "lerp",
         value: function lerp(current, target, fraction) {
+            if (isNaN(target) || target === Infinity || target === -Infinity) return current;
             return current + (target - current) * fraction;
+        }
+    }, {
+        key: "constrain",
+        value: function constrain(max, min, value) {
+            return Math.min(max, Math.max(min, value));
         }
     }]);
 
@@ -2744,6 +2866,256 @@ var Helper = function () {
 }();
 
 module.exports = Helper;
+
+/***/ }),
+/* 17 */,
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var SourceTypes = {
+    URL: 'url',
+    FILE: 'file',
+    ARRAY_BUFFER: 'arrayBuffer'
+};
+
+var Track = function () {
+
+    /**
+     * @param {object} data
+     * @param {string|File} data.source
+     * @param {string} [data.title]
+     */
+    function Track(data) {
+        _classCallCheck(this, Track);
+
+        this.source = data.source;
+        this.title = data.title;
+        this.arrayBufferCache = null;
+        this.analyseSource();
+    }
+
+    _createClass(Track, [{
+        key: 'analyseSource',
+        value: function analyseSource() {
+            if (typeof this.source === 'string') {
+                this.sourceType = SourceTypes.URL;
+                this.title = this.title || decodeURIComponent(this.source.split('/').pop().replace(/\.[a-zA-Z0-9]+$/, ''));
+            } else if (this.source instanceof File) {
+                this.sourceType = SourceTypes.FILE;
+                this.title = this.title || this.source.name.replace(/\.[a-zA-Z0-9]+$/, '');
+            } else if (this.source instanceof ArrayBuffer) {
+                this.sourceType = SourceTypes.ARRAY_BUFFER;
+                this.title = this.title || 'Untitled';
+            } else {
+                throw new Error('\'Unsupported Track source type: ' + this.source);
+            }
+        }
+
+        /**
+         * @return {Promise.<ArrayBuffer>}
+         */
+
+    }, {
+        key: 'prepareArrayBuffer',
+        value: function prepareArrayBuffer() {
+            var _this = this;
+
+            if (this.arrayBufferCache) return Promise.resolve(this.arrayBufferCache);
+            switch (this.sourceType) {
+                case SourceTypes.URL:
+                    return window.fetch(this.source).then(function (response) {
+                        var arrayBuffer = response.arrayBuffer();
+                        _this.arrayBufferCache = arrayBuffer;
+                        return arrayBuffer;
+                    });
+                case SourceTypes.FILE:
+                    return new Promise(function (resolve, reject) {
+                        var reader = new window.FileReader();
+                        reader.onload = function (fileEvent) {
+                            var arrayBuffer = fileEvent.target.result;
+                            _this.arrayBufferCache = arrayBuffer;
+                            resolve(arrayBuffer);
+                        };
+                        reader.onerror = function (error) {
+                            reject(error);
+                        };
+                        reader.readAsArrayBuffer(_this.source);
+                    });
+                case SourceTypes.ARRAY_BUFFER:
+                    return Promise.resolve(this.source);
+                default:
+                    return Promise.reject(new Error('\'Unsupported track source type: ' + this.sourceType));
+            }
+        }
+    }]);
+
+    return Track;
+}();
+
+module.exports = Track;
+module.exports.SourceTypes = SourceTypes;
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var Visualiser = __webpack_require__(15);
+
+var BAR_COUNT = 32;
+
+var RingVisualiser = function (_Visualiser) {
+    _inherits(RingVisualiser, _Visualiser);
+
+    function RingVisualiser() {
+        _classCallCheck(this, RingVisualiser);
+
+        return _possibleConstructorReturn(this, (RingVisualiser.__proto__ || Object.getPrototypeOf(RingVisualiser)).call(this, {
+            code: 'Rn',
+            name: 'Rings 2D',
+            fftSize: BAR_COUNT * 2,
+            smoothingTimeConstant: 0.9
+        }));
+    }
+
+    _createClass(RingVisualiser, [{
+        key: 'onInit',
+        value: function onInit(data) {
+            this.setupSceneAndCamera(data);
+            this.setupLights(data);
+            this.setupPlane(data);
+            this.setupBars(data);
+        }
+    }, {
+        key: 'setupSceneAndCamera',
+        value: function setupSceneAndCamera(data) {
+            this.scene = new THREE.Scene();
+
+            var halfWidth = data.width / 2;
+            var halfHeight = data.height / 2;
+            this.camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, 1, 1000);
+            this.camera.position.x = 5;
+            this.scene.add(this.camera);
+        }
+    }, {
+        key: 'setupLights',
+        value: function setupLights() {
+            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            this.scene.add(ambientLight);
+        }
+    }, {
+        key: 'setupPlane',
+        value: function setupPlane() {
+            var planeGeometry = new THREE.PlaneGeometry(200, 200, 1);
+            var planeMaterial = new THREE.MeshPhongMaterial({ color: 0x444444, side: THREE.DoubleSide });
+            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.receiveShadow = true;
+            plane.rotation.x = Math.PI / 2;
+            this.scene.add(plane);
+        }
+    }, {
+        key: 'setupBars',
+        value: function setupBars() {
+            this.bars = [];
+            this.lights = [];
+            this.cubeLights = [];
+            var step = 2 * Math.PI / BAR_COUNT;
+            var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
+            var radius = 5;
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var color = 0xff0000 + i * 5;
+                var bar = new THREE.Object3D();
+                var material = new THREE.MeshLambertMaterial({ color: color });
+                var cube = new THREE.Mesh(geometry, material);
+                var cubeLight = new THREE.PointLight(color, 0, 4);
+                cubeLight.position.y = 7;
+                cubeLight.position.x = -1;
+                cube.add(cubeLight);
+                var light = new THREE.PointLight(color, 0, 10);
+                light.position.y = 1;
+                light.position.x = 10;
+                bar.add(light);
+                bar.add(cube);
+                bar.position.x = radius;
+                cube.position.y = -4.8;
+                var pivot = new THREE.Object3D();
+                pivot.rotation.y = step * i;
+                pivot.add(bar);
+                this.scene.add(pivot);
+                this.bars.push(cube);
+                this.lights.push(light);
+                this.cubeLights.push(cubeLight);
+            }
+        }
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(data) {
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var bar = this.bars[i];
+                var light = this.lights[i];
+                var cubeLight = this.cubeLights[i];
+                var frequency = Math.abs(data.frequencyData[i]);
+                var timeDomain = data.timeDomainData[i];
+
+                var value = frequency * timeDomain;
+                if (value === Infinity || value === -Infinity) continue;
+                var newY = bar.position.y + (value - bar.position.y) / 30;
+                if (isNaN(newY)) continue;
+
+                light.intensity = Math.max(0, newY);
+                cubeLight.intensity = Math.max(0, newY) * 0.5;
+                bar.position.y = newY;
+            }
+            this.cameraPivot.rotation.y += 0.01;
+            data.renderer.render(this.scene, this.camera);
+        }
+    }, {
+        key: 'onResize',
+        value: function onResize(data) {
+            this.camera.aspect = data.width / data.height;
+            this.camera.updateProjectionMatrix();
+        }
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            delete this.scene;
+        }
+    }]);
+
+    return RingVisualiser;
+}(Visualiser);
+
+module.exports = RingVisualiser;
 
 /***/ })
 /******/ ]);
