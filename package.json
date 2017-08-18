@@ -1,6 +1,6 @@
 {
   "name": "akko",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Music visualising framework based on WebGL and Web Audio API.",
   "main": "index.js",
   "scripts": {

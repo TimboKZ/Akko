@@ -2267,16 +2267,9 @@ var BarVisualiser = function (_Visualiser) {
         key: 'onInit',
         value: function onInit(data) {
             this.setupSceneAndCamera(data);
-            this.prepareRenderer(data);
             this.setupLights(data);
             this.setupPlane(data);
             this.setupBars(data);
-        }
-    }, {
-        key: 'prepareRenderer',
-        value: function prepareRenderer(data) {
-            data.renderer.shadowMap.enabled = true;
-            data.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         }
     }, {
         key: 'setupSceneAndCamera',
@@ -2339,11 +2332,6 @@ var BarVisualiser = function (_Visualiser) {
                 this.lights.push(light);
                 this.cubeLights.push(cubeLight);
             }
-        }
-    }, {
-        key: 'onRevive',
-        value: function onRevive(data) {
-            this.prepareRenderer(data);
         }
     }, {
         key: 'onUpdate',
