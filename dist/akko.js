@@ -61,7 +61,7 @@ var Akko =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,1181 +72,6 @@ module.exports = THREE;
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-module.exports = {
-  BarVisualiser: __webpack_require__(13)
-};
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(3);
-__webpack_require__(4);
-module.exports = __webpack_require__(5);
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-(function(self) {
-  'use strict';
-
-  if (self.fetch) {
-    return
-  }
-
-  var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
-    blob: 'FileReader' in self && 'Blob' in self && (function() {
-      try {
-        new Blob()
-        return true
-      } catch(e) {
-        return false
-      }
-    })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  }
-
-  if (support.arrayBuffer) {
-    var viewClasses = [
-      '[object Int8Array]',
-      '[object Uint8Array]',
-      '[object Uint8ClampedArray]',
-      '[object Int16Array]',
-      '[object Uint16Array]',
-      '[object Int32Array]',
-      '[object Uint32Array]',
-      '[object Float32Array]',
-      '[object Float64Array]'
-    ]
-
-    var isDataView = function(obj) {
-      return obj && DataView.prototype.isPrototypeOf(obj)
-    }
-
-    var isArrayBufferView = ArrayBuffer.isView || function(obj) {
-      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
-    }
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name)
-    }
-    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value)
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift()
-        return {done: value === undefined, value: value}
-      }
-    }
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      }
-    }
-
-    return iterator
-  }
-
-  function Headers(headers) {
-    this.map = {}
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value)
-      }, this)
-    } else if (Array.isArray(headers)) {
-      headers.forEach(function(header) {
-        this.append(header[0], header[1])
-      }, this)
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name])
-      }, this)
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name)
-    value = normalizeValue(value)
-    var oldValue = this.map[name]
-    this.map[name] = oldValue ? oldValue+','+value : value
-  }
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)]
-  }
-
-  Headers.prototype.get = function(name) {
-    name = normalizeName(name)
-    return this.has(name) ? this.map[name] : null
-  }
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  }
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = normalizeValue(value)
-  }
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    for (var name in this.map) {
-      if (this.map.hasOwnProperty(name)) {
-        callback.call(thisArg, this.map[name], name, this)
-      }
-    }
-  }
-
-  Headers.prototype.keys = function() {
-    var items = []
-    this.forEach(function(value, name) { items.push(name) })
-    return iteratorFor(items)
-  }
-
-  Headers.prototype.values = function() {
-    var items = []
-    this.forEach(function(value) { items.push(value) })
-    return iteratorFor(items)
-  }
-
-  Headers.prototype.entries = function() {
-    var items = []
-    this.forEach(function(value, name) { items.push([name, value]) })
-    return iteratorFor(items)
-  }
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result)
-      }
-      reader.onerror = function() {
-        reject(reader.error)
-      }
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader()
-    var promise = fileReaderReady(reader)
-    reader.readAsArrayBuffer(blob)
-    return promise
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader()
-    var promise = fileReaderReady(reader)
-    reader.readAsText(blob)
-    return promise
-  }
-
-  function readArrayBufferAsText(buf) {
-    var view = new Uint8Array(buf)
-    var chars = new Array(view.length)
-
-    for (var i = 0; i < view.length; i++) {
-      chars[i] = String.fromCharCode(view[i])
-    }
-    return chars.join('')
-  }
-
-  function bufferClone(buf) {
-    if (buf.slice) {
-      return buf.slice(0)
-    } else {
-      var view = new Uint8Array(buf.byteLength)
-      view.set(new Uint8Array(buf))
-      return view.buffer
-    }
-  }
-
-  function Body() {
-    this.bodyUsed = false
-
-    this._initBody = function(body) {
-      this._bodyInit = body
-      if (!body) {
-        this._bodyText = ''
-      } else if (typeof body === 'string') {
-        this._bodyText = body
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString()
-      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-        this._bodyArrayBuffer = bufferClone(body.buffer)
-        // IE 10-11 can't handle a DataView body.
-        this._bodyInit = new Blob([this._bodyArrayBuffer])
-      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
-        this._bodyArrayBuffer = bufferClone(body)
-      } else {
-        throw new Error('unsupported BodyInit type')
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8')
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type)
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
-        }
-      }
-    }
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this)
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyArrayBuffer) {
-          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      }
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      }
-    }
-
-    this.text = function() {
-      var rejected = consumed(this)
-      if (rejected) {
-        return rejected
-      }
-
-      if (this._bodyBlob) {
-        return readBlobAsText(this._bodyBlob)
-      } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
-      } else if (this._bodyFormData) {
-        throw new Error('could not read FormData body as text')
-      } else {
-        return Promise.resolve(this._bodyText)
-      }
-    }
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      }
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    }
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase()
-    return (methods.indexOf(upcased) > -1) ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {}
-    var body = options.body
-
-    if (input instanceof Request) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url
-      this.credentials = input.credentials
-      if (!options.headers) {
-        this.headers = new Headers(input.headers)
-      }
-      this.method = input.method
-      this.mode = input.mode
-      if (!body && input._bodyInit != null) {
-        body = input._bodyInit
-        input.bodyUsed = true
-      }
-    } else {
-      this.url = String(input)
-    }
-
-    this.credentials = options.credentials || this.credentials || 'omit'
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers)
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET')
-    this.mode = options.mode || this.mode || null
-    this.referrer = null
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body)
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this, { body: this._bodyInit })
-  }
-
-  function decode(body) {
-    var form = new FormData()
-    body.trim().split('&').forEach(function(bytes) {
-      if (bytes) {
-        var split = bytes.split('=')
-        var name = split.shift().replace(/\+/g, ' ')
-        var value = split.join('=').replace(/\+/g, ' ')
-        form.append(decodeURIComponent(name), decodeURIComponent(value))
-      }
-    })
-    return form
-  }
-
-  function parseHeaders(rawHeaders) {
-    var headers = new Headers()
-    rawHeaders.split(/\r?\n/).forEach(function(line) {
-      var parts = line.split(':')
-      var key = parts.shift().trim()
-      if (key) {
-        var value = parts.join(':').trim()
-        headers.append(key, value)
-      }
-    })
-    return headers
-  }
-
-  Body.call(Request.prototype)
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {}
-    }
-
-    this.type = 'default'
-    this.status = 'status' in options ? options.status : 200
-    this.ok = this.status >= 200 && this.status < 300
-    this.statusText = 'statusText' in options ? options.statusText : 'OK'
-    this.headers = new Headers(options.headers)
-    this.url = options.url || ''
-    this._initBody(bodyInit)
-  }
-
-  Body.call(Response.prototype)
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  }
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''})
-    response.type = 'error'
-    return response
-  }
-
-  var redirectStatuses = [301, 302, 303, 307, 308]
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  }
-
-  self.Headers = Headers
-  self.Request = Request
-  self.Response = Response
-
-  self.fetch = function(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request = new Request(input, init)
-      var xhr = new XMLHttpRequest()
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
-        }
-        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
-        var body = 'response' in xhr ? xhr.response : xhr.responseText
-        resolve(new Response(body, options))
-      }
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'))
-      }
-
-      xhr.open(request.method, request.url, true)
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true
-      }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob'
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value)
-      })
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
-    })
-  }
-  self.fetch.polyfill = true
-})(typeof self !== 'undefined' ? self : this);
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var Akko = __webpack_require__(6);
-var Visualisers = __webpack_require__(1);
-
-module.exports = Akko;
-module.exports.visualisers = Visualisers;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-
-var MusicPlayer = __webpack_require__(7);
-var ThreeWrapper = __webpack_require__(9);
-var UI = __webpack_require__(11);
-var Visualisers = __webpack_require__(1);
-
-/**
- * @type {{containerId: string, defaultVisualizers: boolean}}
- */
-var defaultOptions = {
-    containerId: 'akko',
-    defaultVisualizers: true
-};
-
-/**
- * @return {{containerId: string, defaultVisualizers: boolean}}
- */
-var mergeOptions = function mergeOptions() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-    var result = {};
-    for (var key in defaultOptions) {
-        if (!defaultOptions.hasOwnProperty(key)) continue;
-        result[key] = options[key] !== undefined ? options[key] : defaultOptions[key];
-    }
-    return result;
-};
-
-var Akko = function () {
-    function Akko(options) {
-        _classCallCheck(this, Akko);
-
-        if (!THREE) throw new Error('Akko could not find three.js (`THREE`)!');
-        if (!window) throw new Error('Akko could not find `window` variable! Are you running Akko in browser?');
-        if (!document) throw new Error('Akko could not find `document` variable! Are you running Akko in browser?');
-
-        this.AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!this.AudioContext) throw new Error('Akko could not find `AudioContext`! Is it supported in your browser?');
-
-        this.options = mergeOptions(options);
-        this.musicPlayer = new MusicPlayer({
-            AudioContext: this.AudioContext
-        });
-        this.visualisers = this.options.defaultVisualizers ? [new Visualisers.BarVisualiser()] : [];
-    }
-
-    _createClass(Akko, [{
-        key: 'start',
-        value: function start() {
-            this.container = document.getElementById(this.options.containerId);
-            if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
-
-            this.bootstrapUI();
-
-            this.threeWrapper = new ThreeWrapper({
-                parentElement: this.container,
-                analyser: this.musicPlayer.getAnalyser()
-            });
-            this.threeWrapper.setVisualiser(this.visualisers[0]);
-
-            this.musicPlayer.start();
-            this.threeWrapper.start();
-            this.setupListeners();
-        }
-    }, {
-        key: 'bootstrapUI',
-        value: function bootstrapUI() {
-            this.ui = new UI({
-                container: this.container,
-                musicPlayer: this.musicPlayer
-            });
-            this.ui.start();
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'addVisualiser',
-        value: function addVisualiser(visualiser) {
-            this.visualisers.push(visualiser);
-        }
-
-        /**
-         * TODO: Extend JSDoc to Web Audio files
-         * @param {string} item
-         */
-
-    }, {
-        key: 'addToQueue',
-        value: function addToQueue(item) {
-            this.musicPlayer.addItem(item);
-        }
-
-        /**
-         * @private
-         */
-
-    }, {
-        key: 'setupListeners',
-        value: function setupListeners() {
-            if (window.File && window.FileReader && window.FileList && window.Blob) {
-                this.container.addEventListener('dragover', this.onDragOver.bind(this), false);
-                this.container.addEventListener('drop', this.onDrop.bind(this), false);
-            } else {
-                console.warn('The File APIs are not fully supported your browser. Drag & drop disabled in Akko.');
-            }
-        }
-
-        /**
-         * @private
-         */
-
-    }, {
-        key: 'onDragOver',
-        value: function onDragOver(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'copy';
-        }
-
-        /**
-         * @private
-         */
-
-    }, {
-        key: 'onDrop',
-        value: function onDrop(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            var files = event.dataTransfer.files;
-
-            for (var i = 0; i < files.length; i++) {
-                var file = files[i];
-                if (file.type.match(/image.*/)) {
-                    var reader = new FileReader();
-                    reader.onload = function (e2) {
-                        // finished reading file data.
-                        var img = document.createElement('img');
-                        img.src = e2.target.result;
-                        document.body.appendChild(img);
-                    };
-                    reader.readAsDataURL(file); // start reading the file data.
-                }
-            }
-        }
-    }]);
-
-    return Akko;
-}();
-
-module.exports = Akko;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var Promise = __webpack_require__(8);
-
-var MusicPlayer = function () {
-
-    /**
-     * @param data
-     * @param data.AudioContext
-     */
-    function MusicPlayer(data) {
-        _classCallCheck(this, MusicPlayer);
-
-        this.context = new data.AudioContext();
-        this.gain = this.context.createGain();
-        this.gain.connect(this.context.destination);
-        this.analyser = this.context.createAnalyser();
-        this.analyser.connect(this.context.destination);
-
-        this.buffer = null;
-        this.sourceNode = this.context.createBufferSource();
-        this.startedAt = 0;
-        this.pausedAt = 0;
-        this.playing = false;
-
-        this.playbackListeners = [];
-
-        this.queue = [];
-    }
-
-    _createClass(MusicPlayer, [{
-        key: 'start',
-        value: function start() {
-            this.playNextTrack();
-        }
-    }, {
-        key: 'playNextTrack',
-        value: function playNextTrack() {
-            var _this = this;
-
-            var nextItem = this.queue.pop();
-            if (!nextItem) return Promise.resolve(null);
-
-            // TODO: Add support for other types.
-
-            if (typeof nextItem === 'string') {
-                return window.fetch(nextItem).then(function (response) {
-                    return response.arrayBuffer();
-                }).then(function (arrayBuffer) {
-                    return _this.context.decodeAudioData(arrayBuffer);
-                }).then(function (audioBuffer) {
-                    _this.buffer = audioBuffer;
-                    _this.stop();
-                    _this.play();
-                    var parts = nextItem.split('/');
-                    var title = parts.pop().replace(/\.[a-zA-Z0-9]+/, '');
-                    for (var i = 0; i < _this.playbackListeners.length; i++) {
-                        _this.playbackListeners[i](title, _this.queue, _this.playing);
-                    }
-                }).catch(function (error) {
-                    console.error('Whoops, could load the next queue item:', error);
-                });
-            } else {
-                console.warn('Unsupported queue item type: ', nextItem, ' Skipping!');
-                return this.playNextTrack();
-            }
-        }
-
-        /**
-         * @callback playbackListener
-         * @param {string} currentTrackTitle
-         * @param {string[]} trackQueue
-         * @param {boolean} playing
-         */
-        /**
-         * @param {playbackListener} listener
-         */
-
-    }, {
-        key: 'addPlaybackListener',
-        value: function addPlaybackListener(listener) {
-            this.playbackListeners.push(listener);
-        }
-    }, {
-        key: 'togglePlayback',
-        value: function togglePlayback() {
-            if (this.playing) {
-                this.pause();
-            } else {
-                this.play();
-            }
-            return this.playing;
-        }
-    }, {
-        key: 'play',
-        value: function play() {
-            var offset = this.pausedAt;
-            this.sourceNode = this.context.createBufferSource();
-            this.sourceNode.connect(this.gain);
-            this.sourceNode.connect(this.analyser);
-            this.sourceNode.buffer = this.buffer;
-            this.sourceNode.start(0, offset);
-            this.startedAt = this.context.currentTime - offset;
-            this.pausedAt = 0;
-            this.playing = true;
-        }
-    }, {
-        key: 'pause',
-        value: function pause() {
-            if (!this.playing) return;
-            var elapsed = this.context.currentTime - this.startedAt;
-            this.stop();
-            this.pausedAt = elapsed;
-        }
-    }, {
-        key: 'stop',
-        value: function stop() {
-            if (!this.playing) return;
-            if (this.sourceNode) {
-                this.sourceNode.disconnect();
-                this.sourceNode.stop(0);
-                this.sourceNode = null;
-            }
-            this.pausedAt = 0;
-            this.startedAt = 0;
-            this.playing = false;
-        }
-    }, {
-        key: 'addItem',
-        value: function addItem(item) {
-            this.queue.unshift(item);
-        }
-    }, {
-        key: 'getAnalyser',
-        value: function getAnalyser() {
-            return this.analyser;
-        }
-    }]);
-
-    return MusicPlayer;
-}();
-
-module.exports = MusicPlayer;
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-module.exports = Promise;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-var elementResizeEvent = __webpack_require__(10);
-
-var ThreeWrapper = function () {
-
-    /**
-     * @param {object} data
-     * @param {Element} data.parentElement
-     * @param {Visualiser} data.visualiser
-     * @param {object} data.analyser
-     */
-    function ThreeWrapper(data) {
-        _classCallCheck(this, ThreeWrapper);
-
-        this.parentElement = data.parentElement;
-        var width = this.parentElement.offsetWidth;
-        var height = this.parentElement.offsetHeight;
-
-        this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setSize(width, height);
-        this.canvas = this.renderer.domElement;
-        this.parentElement.appendChild(this.canvas);
-
-        this.currentScene = null;
-        this.currentCamera = null;
-        this.frequencyDataArray = null;
-        this.analyser = data.analyser;
-        this.visualiser = data.visualiser;
-    }
-
-    _createClass(ThreeWrapper, [{
-        key: 'start',
-        value: function start() {
-            this.setupListeners();
-            this.currentScene = this.getDefaultScene();
-            this.currentCamera = this.getDefaultCamera();
-            this.renderLoop();
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'setVisualiser',
-        value: function setVisualiser(visualiser) {
-            if (visualiser) this.prepareVisualiser(visualiser);
-            if (this.visualiser) this.visualiser.pause();
-            this.visualiser = visualiser;
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'prepareVisualiser',
-        value: function prepareVisualiser(visualiser) {
-            this.analyser.fftSize = visualiser.fftSize;
-            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
-            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            var data = {
-                renderer: this.renderer,
-                width: this.canvas.clientWidth,
-                height: this.canvas.clientHeight
-            };
-            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
-            visualiser.resize(data);
-        }
-    }, {
-        key: 'setupListeners',
-        value: function setupListeners() {
-            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
-        }
-    }, {
-        key: 'renderLoop',
-        value: function renderLoop() {
-            if (this.visualiser) {
-                if (this.analyser) {
-                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
-                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
-                }
-                this.visualiser.update({
-                    renderer: this.renderer,
-                    frequencyData: this.frequencyDataArray,
-                    timeDomainData: this.timeDomainDataArray
-                });
-            } else {
-                this.renderer.render(this.currentScene, this.currentCamera);
-            }
-            requestAnimationFrame(this.renderLoop.bind(this));
-        }
-    }, {
-        key: 'getDefaultScene',
-        value: function getDefaultScene() {
-            var scene = new THREE.Scene();
-            var geometry = new THREE.BoxGeometry(1, 1, 1);
-            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            var cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
-            return scene;
-        }
-    }, {
-        key: 'getDefaultCamera',
-        value: function getDefaultCamera() {
-            var width = this.canvas.clientWidth;
-            var height = this.canvas.clientHeight;
-            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-            camera.position.z = 5;
-            return camera;
-        }
-    }, {
-        key: 'onParentResize',
-        value: function onParentResize() {
-            var width = this.parentElement.offsetWidth;
-            var height = this.parentElement.offsetHeight;
-            // this.canvas.width = width;
-            // this.canvas.height = height;
-            this.renderer.setSize(width, height);
-            // this.canvas.style.width = `${width}px`;
-            // this.canvas.style.height = `${height}px`;
-            // this.renderer.setViewport(0, 0, width, height);
-            if (this.visualiser) this.visualiser.resize({
-                renderer: this.renderer,
-                width: width,
-                height: height
-            });
-        }
-    }]);
-
-    return ThreeWrapper;
-}();
-
-module.exports = ThreeWrapper;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-var requestFrame = (function () {
-  var window = this
-  var raf = window.requestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    function fallbackRAF(func) {
-      return window.setTimeout(func, 20)
-    }
-  return function requestFrameFunction(func) {
-    return raf(func)
-  }
-})()
-
-var cancelFrame = (function () {
-  var window = this
-  var cancel = window.cancelAnimationFrame ||
-    window.mozCancelAnimationFrame ||
-    window.webkitCancelAnimationFrame ||
-    window.clearTimeout
-  return function cancelFrameFunction(id) {
-    return cancel(id)
-  }
-})()
-
-function resizeListener(e) {
-  var win = e.target || e.srcElement
-  if (win.__resizeRAF__) {
-    cancelFrame(win.__resizeRAF__)
-  }
-  win.__resizeRAF__ = requestFrame(function () {
-    var trigger = win.__resizeTrigger__
-    trigger.__resizeListeners__.forEach(function (fn) {
-      fn.call(trigger, e)
-    })
-  })
-}
-
-var exports = function exports(element, fn) {
-  var window = this
-  var document = window.document
-  var isIE
-
-  var attachEvent = document.attachEvent
-  if (typeof navigator !== 'undefined') {
-    isIE = navigator.userAgent.match(/Trident/) ||
-      navigator.userAgent.match(/Edge/)
-  }
-
-  function objectLoad() {
-    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
-    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
-  }
-
-  if (!element.__resizeListeners__) {
-    element.__resizeListeners__ = []
-    if (attachEvent) {
-      element.__resizeTrigger__ = element
-      element.attachEvent('onresize', resizeListener)
-    } else {
-      if (getComputedStyle(element).position === 'static') {
-        element.style.position = 'relative'
-      }
-      var obj = (element.__resizeTrigger__ = document.createElement('object'))
-      obj.setAttribute(
-        'style',
-        'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;'
-      )
-      obj.setAttribute('class', 'resize-sensor')
-      obj.__resizeElement__ = element
-      obj.onload = objectLoad
-      obj.type = 'text/html'
-      if (isIE) {
-        element.appendChild(obj)
-      }
-      obj.data = 'about:blank'
-      if (!isIE) {
-        element.appendChild(obj)
-      }
-    }
-  }
-  element.__resizeListeners__.push(fn)
-}
-
-module.exports = typeof window === 'undefined' ? exports : exports.bind(window)
-
-module.exports.unbind = function (element, fn) {
-  var attachEvent = document.attachEvent
-  if (fn) {
-    element.__resizeListeners__.splice(
-      element.__resizeListeners__.indexOf(fn),
-      1
-    )
-  } else {
-    element.__resizeListeners__ = []
-  }
-  if (!element.__resizeListeners__.length) {
-    if (attachEvent) {
-      element.detachEvent('onresize', resizeListener)
-    } else {
-      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener(
-        'resize',
-        resizeListener
-      )
-      delete element.__resizeTrigger__.contentDocument.defaultView.__resizeTrigger__
-      element.__resizeTrigger__ = !element.removeChild(
-        element.__resizeTrigger__
-      )
-    }
-    delete element.__resizeListeners__
-  }
-}
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var _require = __webpack_require__(12),
-    render = _require.render,
-    h = _require.h;
-
-var UIComponent = __webpack_require__(16);
-
-var UI = function () {
-
-    /**
-     * @param {object} data
-     * @param {Element} data.container
-     * @param {MusicPlayer} data.musicPlayer
-     */
-    function UI(data) {
-        _classCallCheck(this, UI);
-
-        this.container = data.container;
-        this.musicPlayer = data.musicPlayer;
-        this.playing = false;
-    }
-
-    _createClass(UI, [{
-        key: 'start',
-        value: function start() {
-            render(h(UIComponent, { musicPlayer: this.musicPlayer }), this.container);
-        }
-    }]);
-
-    return UI;
-}();
-
-module.exports = UI;
-
-/***/ }),
-/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2224,6 +1049,1186 @@ var preact = {
 
 
 /***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+module.exports = {
+  BarVisualiser: __webpack_require__(14)
+};
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(4);
+__webpack_require__(5);
+module.exports = __webpack_require__(6);
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+(function(self) {
+  'use strict';
+
+  if (self.fetch) {
+    return
+  }
+
+  var support = {
+    searchParams: 'URLSearchParams' in self,
+    iterable: 'Symbol' in self && 'iterator' in Symbol,
+    blob: 'FileReader' in self && 'Blob' in self && (function() {
+      try {
+        new Blob()
+        return true
+      } catch(e) {
+        return false
+      }
+    })(),
+    formData: 'FormData' in self,
+    arrayBuffer: 'ArrayBuffer' in self
+  }
+
+  if (support.arrayBuffer) {
+    var viewClasses = [
+      '[object Int8Array]',
+      '[object Uint8Array]',
+      '[object Uint8ClampedArray]',
+      '[object Int16Array]',
+      '[object Uint16Array]',
+      '[object Int32Array]',
+      '[object Uint32Array]',
+      '[object Float32Array]',
+      '[object Float64Array]'
+    ]
+
+    var isDataView = function(obj) {
+      return obj && DataView.prototype.isPrototypeOf(obj)
+    }
+
+    var isArrayBufferView = ArrayBuffer.isView || function(obj) {
+      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+    }
+  }
+
+  function normalizeName(name) {
+    if (typeof name !== 'string') {
+      name = String(name)
+    }
+    if (/[^a-z0-9\-#$%&'*+.\^_`|~]/i.test(name)) {
+      throw new TypeError('Invalid character in header field name')
+    }
+    return name.toLowerCase()
+  }
+
+  function normalizeValue(value) {
+    if (typeof value !== 'string') {
+      value = String(value)
+    }
+    return value
+  }
+
+  // Build a destructive iterator for the value list
+  function iteratorFor(items) {
+    var iterator = {
+      next: function() {
+        var value = items.shift()
+        return {done: value === undefined, value: value}
+      }
+    }
+
+    if (support.iterable) {
+      iterator[Symbol.iterator] = function() {
+        return iterator
+      }
+    }
+
+    return iterator
+  }
+
+  function Headers(headers) {
+    this.map = {}
+
+    if (headers instanceof Headers) {
+      headers.forEach(function(value, name) {
+        this.append(name, value)
+      }, this)
+    } else if (Array.isArray(headers)) {
+      headers.forEach(function(header) {
+        this.append(header[0], header[1])
+      }, this)
+    } else if (headers) {
+      Object.getOwnPropertyNames(headers).forEach(function(name) {
+        this.append(name, headers[name])
+      }, this)
+    }
+  }
+
+  Headers.prototype.append = function(name, value) {
+    name = normalizeName(name)
+    value = normalizeValue(value)
+    var oldValue = this.map[name]
+    this.map[name] = oldValue ? oldValue+','+value : value
+  }
+
+  Headers.prototype['delete'] = function(name) {
+    delete this.map[normalizeName(name)]
+  }
+
+  Headers.prototype.get = function(name) {
+    name = normalizeName(name)
+    return this.has(name) ? this.map[name] : null
+  }
+
+  Headers.prototype.has = function(name) {
+    return this.map.hasOwnProperty(normalizeName(name))
+  }
+
+  Headers.prototype.set = function(name, value) {
+    this.map[normalizeName(name)] = normalizeValue(value)
+  }
+
+  Headers.prototype.forEach = function(callback, thisArg) {
+    for (var name in this.map) {
+      if (this.map.hasOwnProperty(name)) {
+        callback.call(thisArg, this.map[name], name, this)
+      }
+    }
+  }
+
+  Headers.prototype.keys = function() {
+    var items = []
+    this.forEach(function(value, name) { items.push(name) })
+    return iteratorFor(items)
+  }
+
+  Headers.prototype.values = function() {
+    var items = []
+    this.forEach(function(value) { items.push(value) })
+    return iteratorFor(items)
+  }
+
+  Headers.prototype.entries = function() {
+    var items = []
+    this.forEach(function(value, name) { items.push([name, value]) })
+    return iteratorFor(items)
+  }
+
+  if (support.iterable) {
+    Headers.prototype[Symbol.iterator] = Headers.prototype.entries
+  }
+
+  function consumed(body) {
+    if (body.bodyUsed) {
+      return Promise.reject(new TypeError('Already read'))
+    }
+    body.bodyUsed = true
+  }
+
+  function fileReaderReady(reader) {
+    return new Promise(function(resolve, reject) {
+      reader.onload = function() {
+        resolve(reader.result)
+      }
+      reader.onerror = function() {
+        reject(reader.error)
+      }
+    })
+  }
+
+  function readBlobAsArrayBuffer(blob) {
+    var reader = new FileReader()
+    var promise = fileReaderReady(reader)
+    reader.readAsArrayBuffer(blob)
+    return promise
+  }
+
+  function readBlobAsText(blob) {
+    var reader = new FileReader()
+    var promise = fileReaderReady(reader)
+    reader.readAsText(blob)
+    return promise
+  }
+
+  function readArrayBufferAsText(buf) {
+    var view = new Uint8Array(buf)
+    var chars = new Array(view.length)
+
+    for (var i = 0; i < view.length; i++) {
+      chars[i] = String.fromCharCode(view[i])
+    }
+    return chars.join('')
+  }
+
+  function bufferClone(buf) {
+    if (buf.slice) {
+      return buf.slice(0)
+    } else {
+      var view = new Uint8Array(buf.byteLength)
+      view.set(new Uint8Array(buf))
+      return view.buffer
+    }
+  }
+
+  function Body() {
+    this.bodyUsed = false
+
+    this._initBody = function(body) {
+      this._bodyInit = body
+      if (!body) {
+        this._bodyText = ''
+      } else if (typeof body === 'string') {
+        this._bodyText = body
+      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+        this._bodyBlob = body
+      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+        this._bodyFormData = body
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this._bodyText = body.toString()
+      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+        this._bodyArrayBuffer = bufferClone(body.buffer)
+        // IE 10-11 can't handle a DataView body.
+        this._bodyInit = new Blob([this._bodyArrayBuffer])
+      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+        this._bodyArrayBuffer = bufferClone(body)
+      } else {
+        throw new Error('unsupported BodyInit type')
+      }
+
+      if (!this.headers.get('content-type')) {
+        if (typeof body === 'string') {
+          this.headers.set('content-type', 'text/plain;charset=UTF-8')
+        } else if (this._bodyBlob && this._bodyBlob.type) {
+          this.headers.set('content-type', this._bodyBlob.type)
+        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8')
+        }
+      }
+    }
+
+    if (support.blob) {
+      this.blob = function() {
+        var rejected = consumed(this)
+        if (rejected) {
+          return rejected
+        }
+
+        if (this._bodyBlob) {
+          return Promise.resolve(this._bodyBlob)
+        } else if (this._bodyArrayBuffer) {
+          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+        } else if (this._bodyFormData) {
+          throw new Error('could not read FormData body as blob')
+        } else {
+          return Promise.resolve(new Blob([this._bodyText]))
+        }
+      }
+
+      this.arrayBuffer = function() {
+        if (this._bodyArrayBuffer) {
+          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+        } else {
+          return this.blob().then(readBlobAsArrayBuffer)
+        }
+      }
+    }
+
+    this.text = function() {
+      var rejected = consumed(this)
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return readBlobAsText(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as text')
+      } else {
+        return Promise.resolve(this._bodyText)
+      }
+    }
+
+    if (support.formData) {
+      this.formData = function() {
+        return this.text().then(decode)
+      }
+    }
+
+    this.json = function() {
+      return this.text().then(JSON.parse)
+    }
+
+    return this
+  }
+
+  // HTTP methods whose capitalization should be normalized
+  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT']
+
+  function normalizeMethod(method) {
+    var upcased = method.toUpperCase()
+    return (methods.indexOf(upcased) > -1) ? upcased : method
+  }
+
+  function Request(input, options) {
+    options = options || {}
+    var body = options.body
+
+    if (input instanceof Request) {
+      if (input.bodyUsed) {
+        throw new TypeError('Already read')
+      }
+      this.url = input.url
+      this.credentials = input.credentials
+      if (!options.headers) {
+        this.headers = new Headers(input.headers)
+      }
+      this.method = input.method
+      this.mode = input.mode
+      if (!body && input._bodyInit != null) {
+        body = input._bodyInit
+        input.bodyUsed = true
+      }
+    } else {
+      this.url = String(input)
+    }
+
+    this.credentials = options.credentials || this.credentials || 'omit'
+    if (options.headers || !this.headers) {
+      this.headers = new Headers(options.headers)
+    }
+    this.method = normalizeMethod(options.method || this.method || 'GET')
+    this.mode = options.mode || this.mode || null
+    this.referrer = null
+
+    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+      throw new TypeError('Body not allowed for GET or HEAD requests')
+    }
+    this._initBody(body)
+  }
+
+  Request.prototype.clone = function() {
+    return new Request(this, { body: this._bodyInit })
+  }
+
+  function decode(body) {
+    var form = new FormData()
+    body.trim().split('&').forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=')
+        var name = split.shift().replace(/\+/g, ' ')
+        var value = split.join('=').replace(/\+/g, ' ')
+        form.append(decodeURIComponent(name), decodeURIComponent(value))
+      }
+    })
+    return form
+  }
+
+  function parseHeaders(rawHeaders) {
+    var headers = new Headers()
+    rawHeaders.split(/\r?\n/).forEach(function(line) {
+      var parts = line.split(':')
+      var key = parts.shift().trim()
+      if (key) {
+        var value = parts.join(':').trim()
+        headers.append(key, value)
+      }
+    })
+    return headers
+  }
+
+  Body.call(Request.prototype)
+
+  function Response(bodyInit, options) {
+    if (!options) {
+      options = {}
+    }
+
+    this.type = 'default'
+    this.status = 'status' in options ? options.status : 200
+    this.ok = this.status >= 200 && this.status < 300
+    this.statusText = 'statusText' in options ? options.statusText : 'OK'
+    this.headers = new Headers(options.headers)
+    this.url = options.url || ''
+    this._initBody(bodyInit)
+  }
+
+  Body.call(Response.prototype)
+
+  Response.prototype.clone = function() {
+    return new Response(this._bodyInit, {
+      status: this.status,
+      statusText: this.statusText,
+      headers: new Headers(this.headers),
+      url: this.url
+    })
+  }
+
+  Response.error = function() {
+    var response = new Response(null, {status: 0, statusText: ''})
+    response.type = 'error'
+    return response
+  }
+
+  var redirectStatuses = [301, 302, 303, 307, 308]
+
+  Response.redirect = function(url, status) {
+    if (redirectStatuses.indexOf(status) === -1) {
+      throw new RangeError('Invalid status code')
+    }
+
+    return new Response(null, {status: status, headers: {location: url}})
+  }
+
+  self.Headers = Headers
+  self.Request = Request
+  self.Response = Response
+
+  self.fetch = function(input, init) {
+    return new Promise(function(resolve, reject) {
+      var request = new Request(input, init)
+      var xhr = new XMLHttpRequest()
+
+      xhr.onload = function() {
+        var options = {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+        }
+        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
+        var body = 'response' in xhr ? xhr.response : xhr.responseText
+        resolve(new Response(body, options))
+      }
+
+      xhr.onerror = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.ontimeout = function() {
+        reject(new TypeError('Network request failed'))
+      }
+
+      xhr.open(request.method, request.url, true)
+
+      if (request.credentials === 'include') {
+        xhr.withCredentials = true
+      }
+
+      if ('responseType' in xhr && support.blob) {
+        xhr.responseType = 'blob'
+      }
+
+      request.headers.forEach(function(value, name) {
+        xhr.setRequestHeader(name, value)
+      })
+
+      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit)
+    })
+  }
+  self.fetch.polyfill = true
+})(typeof self !== 'undefined' ? self : this);
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Akko = __webpack_require__(7);
+var Visualisers = __webpack_require__(2);
+
+module.exports = Akko;
+module.exports.visualisers = Visualisers;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+
+var MusicPlayer = __webpack_require__(8);
+var ThreeWrapper = __webpack_require__(10);
+var UI = __webpack_require__(12);
+var Visualisers = __webpack_require__(2);
+
+/**
+ * @type {{containerId: string, defaultVisualizers: boolean}}
+ */
+var defaultOptions = {
+    containerId: 'akko',
+    defaultVisualizers: true
+};
+
+/**
+ * @return {{containerId: string, defaultVisualizers: boolean}}
+ */
+var mergeOptions = function mergeOptions() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+    var result = {};
+    for (var key in defaultOptions) {
+        if (!defaultOptions.hasOwnProperty(key)) continue;
+        result[key] = options[key] !== undefined ? options[key] : defaultOptions[key];
+    }
+    return result;
+};
+
+var Akko = function () {
+    function Akko(options) {
+        _classCallCheck(this, Akko);
+
+        if (!THREE) throw new Error('Akko could not find three.js (`THREE`)!');
+        if (!window) throw new Error('Akko could not find `window` variable! Are you running Akko in browser?');
+        if (!document) throw new Error('Akko could not find `document` variable! Are you running Akko in browser?');
+
+        this.AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!this.AudioContext) throw new Error('Akko could not find `AudioContext`! Is it supported in your browser?');
+
+        this.options = mergeOptions(options);
+        this.musicPlayer = new MusicPlayer({
+            AudioContext: this.AudioContext
+        });
+        this.visualisers = this.options.defaultVisualizers ? [new Visualisers.BarVisualiser()] : [];
+    }
+
+    _createClass(Akko, [{
+        key: 'start',
+        value: function start() {
+            this.container = document.getElementById(this.options.containerId);
+            if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
+
+            this.bootstrapUI();
+
+            this.threeWrapper = new ThreeWrapper({
+                parentElement: this.container,
+                analyser: this.musicPlayer.getAnalyser()
+            });
+            this.threeWrapper.setVisualiser(this.visualisers[0]);
+
+            this.musicPlayer.start();
+            this.threeWrapper.start();
+            this.setupListeners();
+        }
+    }, {
+        key: 'bootstrapUI',
+        value: function bootstrapUI() {
+            this.ui = new UI({
+                container: this.container,
+                musicPlayer: this.musicPlayer
+            });
+            this.ui.start();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'addVisualiser',
+        value: function addVisualiser(visualiser) {
+            this.visualisers.push(visualiser);
+        }
+
+        /**
+         * TODO: Extend JSDoc to Web Audio files
+         * @param {string} item
+         */
+
+    }, {
+        key: 'addToQueue',
+        value: function addToQueue(item) {
+            this.musicPlayer.addItem(item);
+        }
+
+        /**
+         * @private
+         */
+
+    }, {
+        key: 'setupListeners',
+        value: function setupListeners() {
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                this.container.addEventListener('dragover', this.onDragOver.bind(this), false);
+                this.container.addEventListener('drop', this.onDrop.bind(this), false);
+            } else {
+                console.warn('The File APIs are not fully supported your browser. Drag & drop disabled in Akko.');
+            }
+        }
+
+        /**
+         * @private
+         */
+
+    }, {
+        key: 'onDragOver',
+        value: function onDragOver(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+
+        /**
+         * @private
+         */
+
+    }, {
+        key: 'onDrop',
+        value: function onDrop(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            var files = event.dataTransfer.files;
+
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (file.type.match(/image.*/)) {
+                    var reader = new FileReader();
+                    reader.onload = function (e2) {
+                        // finished reading file data.
+                        var img = document.createElement('img');
+                        img.src = e2.target.result;
+                        document.body.appendChild(img);
+                    };
+                    reader.readAsDataURL(file); // start reading the file data.
+                }
+            }
+        }
+    }]);
+
+    return Akko;
+}();
+
+module.exports = Akko;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Promise = __webpack_require__(9);
+
+var MusicPlayer = function () {
+
+    /**
+     * @param data
+     * @param data.AudioContext
+     */
+    function MusicPlayer(data) {
+        _classCallCheck(this, MusicPlayer);
+
+        /** @type {AudioContext} */
+        this.context = new data.AudioContext();
+        this.gain = this.context.createGain();
+        this.gain.connect(this.context.destination);
+        this.analyser = this.context.createAnalyser();
+        this.analyser.connect(this.context.destination);
+
+        this.buffer = null;
+        this.sourceNode = this.context.createBufferSource();
+        this.startedAt = 0;
+        this.pausedAt = 0;
+        this.playing = false;
+
+        this.playbackListeners = [];
+
+        this.queue = [];
+    }
+
+    _createClass(MusicPlayer, [{
+        key: 'start',
+        value: function start() {
+            this.playNextTrack();
+        }
+    }, {
+        key: 'playNextTrack',
+        value: function playNextTrack() {
+            var _this = this;
+
+            var nextItem = this.queue.pop();
+            if (!nextItem) return Promise.resolve(null);
+
+            // TODO: Add support for other types.
+
+            if (typeof nextItem === 'string') {
+                return window.fetch(nextItem).then(function (response) {
+                    return response.arrayBuffer();
+                }).then(function (arrayBuffer) {
+                    return _this.context.decodeAudioData(arrayBuffer);
+                }).then(function (audioBuffer) {
+                    _this.buffer = audioBuffer;
+                    _this.stop();
+                    _this.play();
+                    var parts = nextItem.split('/');
+                    var title = parts.pop().replace(/\.[a-zA-Z0-9]+/, '');
+                    for (var i = 0; i < _this.playbackListeners.length; i++) {
+                        _this.playbackListeners[i](title, _this.queue, _this.playing);
+                    }
+                }).catch(function (error) {
+                    console.error('Whoops, could load the next queue item:', error);
+                });
+            } else {
+                console.warn('Unsupported queue item type: ', nextItem, ' Skipping!');
+                return this.playNextTrack();
+            }
+        }
+
+        /**
+         * @callback playbackListener
+         * @param {string} currentTrackTitle
+         * @param {string[]} trackQueue
+         * @param {boolean} playing
+         */
+        /**
+         * @param {playbackListener} listener
+         */
+
+    }, {
+        key: 'addPlaybackListener',
+        value: function addPlaybackListener(listener) {
+            this.playbackListeners.push(listener);
+        }
+    }, {
+        key: 'togglePlayback',
+        value: function togglePlayback() {
+            if (this.playing) {
+                this.pause();
+            } else {
+                this.play();
+            }
+            return this.playing;
+        }
+    }, {
+        key: 'play',
+        value: function play() {
+            var offset = this.pausedAt;
+            this.sourceNode = this.context.createBufferSource();
+            this.sourceNode.connect(this.gain);
+            this.sourceNode.connect(this.analyser);
+            this.sourceNode.buffer = this.buffer;
+            this.sourceNode.start(0, offset);
+            this.startedAt = this.context.currentTime - offset;
+            this.pausedAt = 0;
+            this.playing = true;
+        }
+    }, {
+        key: 'pause',
+        value: function pause() {
+            if (!this.playing) return;
+            var elapsed = this.context.currentTime - this.startedAt;
+            this.stop();
+            this.pausedAt = elapsed;
+        }
+    }, {
+        key: 'stop',
+        value: function stop() {
+            if (!this.playing) return;
+            if (this.sourceNode) {
+                this.sourceNode.disconnect();
+                this.sourceNode.stop(0);
+                this.sourceNode = null;
+            }
+            this.pausedAt = 0;
+            this.startedAt = 0;
+            this.playing = false;
+        }
+    }, {
+        key: 'addItem',
+        value: function addItem(item) {
+            this.queue.unshift(item);
+        }
+    }, {
+        key: 'getAnalyser',
+        value: function getAnalyser() {
+            return this.analyser;
+        }
+    }]);
+
+    return MusicPlayer;
+}();
+
+module.exports = MusicPlayer;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+module.exports = Promise;
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var elementResizeEvent = __webpack_require__(11);
+
+var ThreeWrapper = function () {
+
+    /**
+     * @param {object} data
+     * @param {Element} data.parentElement
+     * @param {Visualiser} data.visualiser
+     * @param {object} data.analyser
+     */
+    function ThreeWrapper(data) {
+        _classCallCheck(this, ThreeWrapper);
+
+        this.parentElement = data.parentElement;
+        var width = this.parentElement.offsetWidth;
+        var height = this.parentElement.offsetHeight;
+
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(width, height);
+        this.canvas = this.renderer.domElement;
+        this.parentElement.appendChild(this.canvas);
+
+        this.currentScene = null;
+        this.currentCamera = null;
+        this.frequencyDataArray = null;
+        this.analyser = data.analyser;
+        this.visualiser = data.visualiser;
+    }
+
+    _createClass(ThreeWrapper, [{
+        key: 'start',
+        value: function start() {
+            this.setupListeners();
+            this.currentScene = this.getDefaultScene();
+            this.currentCamera = this.getDefaultCamera();
+            this.renderLoop();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'setVisualiser',
+        value: function setVisualiser(visualiser) {
+            if (visualiser) this.prepareVisualiser(visualiser);
+            if (this.visualiser) this.visualiser.pause();
+            this.visualiser = visualiser;
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'prepareVisualiser',
+        value: function prepareVisualiser(visualiser) {
+            this.analyser.fftSize = visualiser.fftSize;
+            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
+            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            var data = {
+                renderer: this.renderer,
+                width: this.canvas.clientWidth,
+                height: this.canvas.clientHeight
+            };
+            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
+            visualiser.resize(data);
+        }
+    }, {
+        key: 'setupListeners',
+        value: function setupListeners() {
+            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
+        }
+    }, {
+        key: 'renderLoop',
+        value: function renderLoop() {
+            var _this = this;
+
+            if (this.visualiser) {
+                if (this.analyser) {
+                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
+                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
+                }
+                this.visualiser.update({
+                    renderer: this.renderer,
+                    frequencyData: this.frequencyDataArray,
+                    timeDomainData: this.timeDomainDataArray
+                });
+            } else {
+                this.renderer.render(this.currentScene, this.currentCamera);
+            }
+            setTimeout(function () {
+                requestAnimationFrame(_this.renderLoop.bind(_this));
+            }, 1000 / 30);
+        }
+    }, {
+        key: 'getDefaultScene',
+        value: function getDefaultScene() {
+            var scene = new THREE.Scene();
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            var cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            return scene;
+        }
+    }, {
+        key: 'getDefaultCamera',
+        value: function getDefaultCamera() {
+            var width = this.canvas.clientWidth;
+            var height = this.canvas.clientHeight;
+            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.z = 5;
+            return camera;
+        }
+    }, {
+        key: 'onParentResize',
+        value: function onParentResize() {
+            var width = this.parentElement.offsetWidth;
+            var height = this.parentElement.offsetHeight;
+            // this.canvas.width = width;
+            // this.canvas.height = height;
+            this.renderer.setSize(width, height);
+            // this.canvas.style.width = `${width}px`;
+            // this.canvas.style.height = `${height}px`;
+            // this.renderer.setViewport(0, 0, width, height);
+            if (this.visualiser) this.visualiser.resize({
+                renderer: this.renderer,
+                width: width,
+                height: height
+            });
+        }
+    }]);
+
+    return ThreeWrapper;
+}();
+
+module.exports = ThreeWrapper;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+var requestFrame = (function () {
+  var window = this
+  var raf = window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    function fallbackRAF(func) {
+      return window.setTimeout(func, 20)
+    }
+  return function requestFrameFunction(func) {
+    return raf(func)
+  }
+})()
+
+var cancelFrame = (function () {
+  var window = this
+  var cancel = window.cancelAnimationFrame ||
+    window.mozCancelAnimationFrame ||
+    window.webkitCancelAnimationFrame ||
+    window.clearTimeout
+  return function cancelFrameFunction(id) {
+    return cancel(id)
+  }
+})()
+
+function resizeListener(e) {
+  var win = e.target || e.srcElement
+  if (win.__resizeRAF__) {
+    cancelFrame(win.__resizeRAF__)
+  }
+  win.__resizeRAF__ = requestFrame(function () {
+    var trigger = win.__resizeTrigger__
+    trigger.__resizeListeners__.forEach(function (fn) {
+      fn.call(trigger, e)
+    })
+  })
+}
+
+var exports = function exports(element, fn) {
+  var window = this
+  var document = window.document
+  var isIE
+
+  var attachEvent = document.attachEvent
+  if (typeof navigator !== 'undefined') {
+    isIE = navigator.userAgent.match(/Trident/) ||
+      navigator.userAgent.match(/Edge/)
+  }
+
+  function objectLoad() {
+    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
+    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
+  }
+
+  if (!element.__resizeListeners__) {
+    element.__resizeListeners__ = []
+    if (attachEvent) {
+      element.__resizeTrigger__ = element
+      element.attachEvent('onresize', resizeListener)
+    } else {
+      if (getComputedStyle(element).position === 'static') {
+        element.style.position = 'relative'
+      }
+      var obj = (element.__resizeTrigger__ = document.createElement('object'))
+      obj.setAttribute(
+        'style',
+        'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;'
+      )
+      obj.setAttribute('class', 'resize-sensor')
+      obj.__resizeElement__ = element
+      obj.onload = objectLoad
+      obj.type = 'text/html'
+      if (isIE) {
+        element.appendChild(obj)
+      }
+      obj.data = 'about:blank'
+      if (!isIE) {
+        element.appendChild(obj)
+      }
+    }
+  }
+  element.__resizeListeners__.push(fn)
+}
+
+module.exports = typeof window === 'undefined' ? exports : exports.bind(window)
+
+module.exports.unbind = function (element, fn) {
+  var attachEvent = document.attachEvent
+  if (fn) {
+    element.__resizeListeners__.splice(
+      element.__resizeListeners__.indexOf(fn),
+      1
+    )
+  } else {
+    element.__resizeListeners__ = []
+  }
+  if (!element.__resizeListeners__.length) {
+    if (attachEvent) {
+      element.detachEvent('onresize', resizeListener)
+    } else {
+      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener(
+        'resize',
+        resizeListener
+      )
+      delete element.__resizeTrigger__.contentDocument.defaultView.__resizeTrigger__
+      element.__resizeTrigger__ = !element.removeChild(
+        element.__resizeTrigger__
+      )
+    }
+    delete element.__resizeListeners__
+  }
+}
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var _require = __webpack_require__(1),
+    render = _require.render,
+    h = _require.h;
+
+var UIComponent = __webpack_require__(13);
+
+var UI = function () {
+
+    /**
+     * @param {object} data
+     * @param {Element} data.container
+     * @param {MusicPlayer} data.musicPlayer
+     */
+    function UI(data) {
+        _classCallCheck(this, UI);
+
+        this.container = data.container;
+        this.musicPlayer = data.musicPlayer;
+        this.playing = false;
+    }
+
+    _createClass(UI, [{
+        key: 'start',
+        value: function start() {
+            render(h(UIComponent, { musicPlayer: this.musicPlayer }), this.container);
+        }
+    }]);
+
+    return UI;
+}();
+
+module.exports = UI;
+
+/***/ }),
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2244,8 +2249,112 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @license GPL-3.0
  */
 
+var _require = __webpack_require__(1),
+    Component = _require.Component,
+    h = _require.h;
+
+var UIComponent = function (_Component) {
+    _inherits(UIComponent, _Component);
+
+    function UIComponent(props) {
+        _classCallCheck(this, UIComponent);
+
+        var _this = _possibleConstructorReturn(this, (UIComponent.__proto__ || Object.getPrototypeOf(UIComponent)).call(this, props));
+
+        _this.state = {
+            currentTrackTitle: null,
+            trackQueue: null,
+            playing: false
+        };
+        props.musicPlayer.addPlaybackListener(_this.playbackListener.bind(_this));
+        return _this;
+    }
+
+    _createClass(UIComponent, [{
+        key: "playbackListener",
+        value: function playbackListener(currentTrackTitle, trackQueue, playing) {
+            var state = this.state;
+            state.currentTrackTitle = currentTrackTitle;
+            state.trackQueue = trackQueue;
+            state.playing = playing;
+            this.setState(state);
+        }
+    }, {
+        key: "togglePlayback",
+        value: function togglePlayback(event) {
+            event.preventDefault();
+            var state = this.state;
+            state.playing = this.props.musicPlayer.togglePlayback();
+            this.setState(state);
+        }
+    }, {
+        key: "render",
+        value: function render() {
+            return h(
+                "div",
+                { className: "akko-ui" },
+                h(
+                    "div",
+                    { className: "akko-ui-queue" },
+                    h(
+                        "div",
+                        { className: "akko-ui-queue-current" },
+                        "Playing: ",
+                        h(
+                            "strong",
+                            null,
+                            this.state.currentTrackTitle
+                        )
+                    )
+                ),
+                h(
+                    "div",
+                    { className: "akko-ui-controls" },
+                    h(
+                        "a",
+                        { href: "#", alt: "Toggle playback", onClick: this.togglePlayback.bind(this),
+                            className: "akko-ui-controls-play " + (this.state.playing ? 'active' : '') },
+                        this.state.playing ? '❚❚' : '►'
+                    ),
+                    h(
+                        "div",
+                        { className: "akko-ui-controls-progress" },
+                        h("div", { className: "akko-ui-controls-progress-indicator" })
+                    ),
+                    h("div", { className: "akko-ui-controls-volume" })
+                )
+            );
+        }
+    }]);
+
+    return UIComponent;
+}(Component);
+
+module.exports = UIComponent;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
 var THREE = __webpack_require__(0);
-var Visualiser = __webpack_require__(14);
+var Visualiser = __webpack_require__(15);
 
 var BAR_COUNT = 32;
 
@@ -2276,7 +2385,7 @@ var BarVisualiser = function (_Visualiser) {
         value: function setupSceneAndCamera(data) {
             this.scene = new THREE.Scene();
             this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
-            this.camera.position.set(0, 15, 17);
+            this.camera.position.set(0, 17, 15);
             this.camera.rotation.x = -Math.PI / 4;
             this.cameraPivot = new THREE.Object3D();
             this.cameraPivot.add(this.camera);
@@ -2286,8 +2395,8 @@ var BarVisualiser = function (_Visualiser) {
     }, {
         key: 'setupLights',
         value: function setupLights() {
-            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
-            this.scene.add(ambientLight);
+            this.ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            this.scene.add(this.ambientLight);
         }
     }, {
         key: 'setupPlane',
@@ -2307,7 +2416,7 @@ var BarVisualiser = function (_Visualiser) {
             this.cubeLights = [];
             var step = 2 * Math.PI / BAR_COUNT;
             var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
-            var radius = 5;
+            var radius = 8;
             for (var i = 0; i < BAR_COUNT; i++) {
                 var color = 0xff0000 + i * 5;
                 var bar = new THREE.Object3D();
@@ -2336,22 +2445,39 @@ var BarVisualiser = function (_Visualiser) {
     }, {
         key: 'onUpdate',
         value: function onUpdate(data) {
+            var timeDomainAverage = 0;
+            var hslStep = 1 / BAR_COUNT;
             for (var i = 0; i < BAR_COUNT; i++) {
                 var bar = this.bars[i];
                 var light = this.lights[i];
                 var cubeLight = this.cubeLights[i];
                 var frequency = Math.abs(data.frequencyData[i]);
                 var timeDomain = data.timeDomainData[i];
+                timeDomainAverage += timeDomain;
 
-                var value = frequency * timeDomain;
+                var value = frequency * timeDomain / 3;
                 if (value === Infinity || value === -Infinity) continue;
                 var newY = bar.position.y + (value - bar.position.y) / 30;
                 if (isNaN(newY)) continue;
 
+                var initialBarColor = bar.material.color.getHex();
+                var targetBarColor = 0xffffff * timeDomain;
+                var barColor = this.lerp(initialBarColor, targetBarColor, 0.0001);
+
+                bar.material.color.setHSL(hslStep * i, 1, 0.5);
+
                 light.intensity = Math.max(0, newY);
+                light.position.x = timeDomain * 5;
                 cubeLight.intensity = Math.max(0, newY) * 0.5;
-                bar.position.y = newY;
+                var newScaleX = (timeDomain + 1) * 4;
+                bar.scale.x = this.lerp(bar.scale.x, newScaleX, 0.5);
+                bar.position.y = this.lerp(bar.position.y, newY, 0.5);
             }
+            timeDomainAverage /= BAR_COUNT;
+            console.log(timeDomainAverage);
+            var newIntensity = Math.abs(timeDomainAverage) * 2 + 1;
+            this.ambientLight.intensity = this.lerp(this.ambientLight.intensity, newIntensity, 0.1);
+
             this.cameraPivot.rotation.y += 0.01;
             data.renderer.render(this.scene, this.camera);
         }
@@ -2374,7 +2500,7 @@ var BarVisualiser = function (_Visualiser) {
 module.exports = BarVisualiser;
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2384,16 +2510,24 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 /**
  * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
  * @copyright 2017
  * @license GPL-3.0
  */
 
+var Helper = __webpack_require__(17);
+
 /**
  * @abstract
  */
-var Visualiser = function () {
+
+var Visualiser = function (_Helper) {
+    _inherits(Visualiser, _Helper);
 
     /**
      * @param {object} data
@@ -2405,12 +2539,15 @@ var Visualiser = function () {
     function Visualiser(data) {
         _classCallCheck(this, Visualiser);
 
-        this.code = data.code || 'UV';
-        this.name = data.name || 'Untitled Visualiser';
-        this.fftSize = data.fftSize || 128;
-        this.smoothingTimeConstant = data.smoothingTimeConstant || 0;
-        this.initialised = false;
-        this.paused = false;
+        var _this = _possibleConstructorReturn(this, (Visualiser.__proto__ || Object.getPrototypeOf(Visualiser)).call(this));
+
+        _this.code = data.code || 'UV';
+        _this.name = data.name || 'Untitled Visualiser';
+        _this.fftSize = data.fftSize || 128;
+        _this.smoothingTimeConstant = data.smoothingTimeConstant || 0;
+        _this.initialised = false;
+        _this.paused = false;
+        return _this;
     }
 
     /**
@@ -2569,13 +2706,13 @@ var Visualiser = function () {
     }]);
 
     return Visualiser;
-}();
+}(Helper);
 
 module.exports = Visualiser;
 
 /***/ }),
-/* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2585,98 +2722,28 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 /**
  * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
  * @copyright 2017
  * @license GPL-3.0
  */
 
-var _require = __webpack_require__(12),
-    Component = _require.Component,
-    h = _require.h;
-
-var UIComponent = function (_Component) {
-    _inherits(UIComponent, _Component);
-
-    function UIComponent(props) {
-        _classCallCheck(this, UIComponent);
-
-        var _this = _possibleConstructorReturn(this, (UIComponent.__proto__ || Object.getPrototypeOf(UIComponent)).call(this, props));
-
-        _this.state = {
-            currentTrackTitle: null,
-            trackQueue: null,
-            playing: false
-        };
-        props.musicPlayer.addPlaybackListener(_this.playbackListener.bind(_this));
-        return _this;
+var Helper = function () {
+    function Helper() {
+        _classCallCheck(this, Helper);
     }
 
-    _createClass(UIComponent, [{
-        key: "playbackListener",
-        value: function playbackListener(currentTrackTitle, trackQueue, playing) {
-            var state = this.state;
-            state.currentTrackTitle = currentTrackTitle;
-            state.trackQueue = trackQueue;
-            state.playing = playing;
-            this.setState(state);
-        }
-    }, {
-        key: "togglePlayback",
-        value: function togglePlayback(event) {
-            event.preventDefault();
-            var state = this.state;
-            state.playing = this.props.musicPlayer.togglePlayback();
-            this.setState(state);
-        }
-    }, {
-        key: "render",
-        value: function render() {
-            return h(
-                "div",
-                { className: "akko-ui" },
-                h(
-                    "div",
-                    { className: "akko-ui-queue" },
-                    h(
-                        "div",
-                        { className: "akko-ui-queue-current" },
-                        "Playing: ",
-                        h(
-                            "strong",
-                            null,
-                            this.state.currentTrackTitle
-                        )
-                    )
-                ),
-                h(
-                    "div",
-                    { className: "akko-ui-controls" },
-                    h(
-                        "a",
-                        { href: "#", alt: "Toggle playback", onClick: this.togglePlayback.bind(this),
-                            className: "akko-ui-controls-play " + (this.state.playing ? 'active' : '') },
-                        this.state.playing ? '❚❚' : '►'
-                    ),
-                    h(
-                        "div",
-                        { className: "akko-ui-controls-progress" },
-                        h("div", { className: "akko-ui-controls-progress-indicator" })
-                    ),
-                    h("div", { className: "akko-ui-controls-volume" })
-                )
-            );
+    _createClass(Helper, [{
+        key: "lerp",
+        value: function lerp(current, target, fraction) {
+            return current + (target - current) * fraction;
         }
     }]);
 
-    return UIComponent;
-}(Component);
+    return Helper;
+}();
 
-module.exports = UIComponent;
+module.exports = Helper;
 
 /***/ })
 /******/ ]);
