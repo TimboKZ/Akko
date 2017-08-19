@@ -1587,20 +1587,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var THREE = __webpack_require__(0);
 
 var MusicPlayer = __webpack_require__(8);
-var ThreeWrapper = __webpack_require__(10);
+var VisualisationCore = __webpack_require__(20);
 var UI = __webpack_require__(12);
-var Visualisers = __webpack_require__(2);
 
 /**
- * @type {{containerId: string, defaultVisualizers: boolean}}
+ * @type {{containerId: string, useDefaultVisualizers: boolean}}
  */
 var defaultOptions = {
     containerId: 'akko',
-    defaultVisualizers: true
+    useDefaultVisualizers: true
 };
 
 /**
- * @return {{containerId: string, defaultVisualizers: boolean}}
+ * @return {{containerId: string, useDefaultVisualizers: boolean}}
  */
 var mergeOptions = function mergeOptions() {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -1625,39 +1624,28 @@ var Akko = function () {
         if (!this.AudioContext) throw new Error('Akko could not find `AudioContext`! Is it supported in your browser?');
 
         this.options = mergeOptions(options);
+
+        this.container = document.getElementById(this.options.containerId);
+        if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
+
         this.musicPlayer = new MusicPlayer({
             AudioContext: this.AudioContext
         });
-        this.visualisers = this.options.defaultVisualizers ? this.prepareDefautVisualisers() : [];
+        this.visCore = new VisualisationCore({
+            parentElement: this.container,
+            useDefaultVisualizers: this.options.useDefaultVisualizers,
+            analyser: this.musicPlayer.getAnalyser()
+        });
     }
 
     _createClass(Akko, [{
-        key: 'prepareDefautVisualisers',
-        value: function prepareDefautVisualisers() {
-            var visualisers = [];
-            for (var key in Visualisers) {
-                if (!Visualisers.hasOwnProperty(key)) continue;
-                var visualiserClass = Visualisers[key];
-                visualisers.push(new visualiserClass());
-            }
-            return visualisers;
-        }
-    }, {
         key: 'start',
         value: function start() {
-            this.container = document.getElementById(this.options.containerId);
-            if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
-
             this.bootstrapUI();
-
-            this.threeWrapper = new ThreeWrapper({
-                parentElement: this.container,
-                analyser: this.musicPlayer.getAnalyser()
-            });
-            this.threeWrapper.setVisualiser(this.visualisers[0]);
-
+            this.visCore.prepare();
+            this.visCore.useVisualiser(0);
             this.musicPlayer.start();
-            this.threeWrapper.start();
+            this.visCore.start();
             this.setupListeners();
         }
     }, {
@@ -1665,7 +1653,8 @@ var Akko = function () {
         value: function bootstrapUI() {
             this.ui = new UI({
                 container: this.container,
-                musicPlayer: this.musicPlayer
+                musicPlayer: this.musicPlayer,
+                visCore: this.visCore
             });
             this.ui.start();
         }
@@ -1677,18 +1666,18 @@ var Akko = function () {
     }, {
         key: 'addVisualiser',
         value: function addVisualiser(visualiser) {
-            this.visualisers.push(visualiser);
+            this.visCore.addVisualiser(visualiser);
         }
 
         /**
-         * @param {string|File|ArrayBuffer} item
+         * @param {string|File|ArrayBuffer} source
          * @param {string} [title]
          */
 
     }, {
         key: 'addTrack',
-        value: function addTrack(item, title) {
-            this.musicPlayer.addTrack(item, title);
+        value: function addTrack(source, title) {
+            this.musicPlayer.addTrack(source, title);
         }
 
         /**
@@ -1823,6 +1812,16 @@ var MusicPlayer = function () {
                 listener(this.state, this.trackList, this.currentTrackIndex);
             }
         }
+
+        /**
+         * @param {playbackListener} listener
+         */
+
+    }, {
+        key: 'addListener',
+        value: function addListener(listener) {
+            this.listeners.push(listener);
+        }
     }, {
         key: 'start',
         value: function start() {
@@ -1859,16 +1858,6 @@ var MusicPlayer = function () {
                 console.warn('Skipping \'' + track.title + '\'!');
                 return _this.playNextTrack();
             });
-        }
-
-        /**
-         * @param {playbackListener} listener
-         */
-
-    }, {
-        key: 'addListener',
-        value: function addListener(listener) {
-            this.listeners.push(listener);
         }
     }, {
         key: 'togglePlayback',
@@ -1924,9 +1913,9 @@ var MusicPlayer = function () {
         }
     }, {
         key: 'addTrack',
-        value: function addTrack(item, title) {
+        value: function addTrack(source, title) {
             var track = new Track({
-                source: item,
+                source: source,
                 title: title
             });
             this.trackList.push(track);
@@ -1952,163 +1941,7 @@ module.exports.States = PlayerStates;
 module.exports = Promise;
 
 /***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-var elementResizeEvent = __webpack_require__(11);
-
-var ThreeWrapper = function () {
-
-    /**
-     * @param {object} data
-     * @param {Element} data.parentElement
-     * @param {Visualiser} data.visualiser
-     * @param {object} data.analyser
-     */
-    function ThreeWrapper(data) {
-        _classCallCheck(this, ThreeWrapper);
-
-        this.parentElement = data.parentElement;
-        var width = this.parentElement.offsetWidth;
-        var height = this.parentElement.offsetHeight;
-
-        this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setSize(width, height);
-        this.canvas = this.renderer.domElement;
-        this.parentElement.appendChild(this.canvas);
-
-        this.currentScene = null;
-        this.currentCamera = null;
-        this.frequencyDataArray = null;
-        this.analyser = data.analyser;
-        this.visualiser = data.visualiser;
-    }
-
-    _createClass(ThreeWrapper, [{
-        key: 'start',
-        value: function start() {
-            this.setupListeners();
-            this.currentScene = this.getDefaultScene();
-            this.currentCamera = this.getDefaultCamera();
-            this.renderLoop();
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'setVisualiser',
-        value: function setVisualiser(visualiser) {
-            if (visualiser) this.prepareVisualiser(visualiser);
-            if (this.visualiser) this.visualiser.pause();
-            this.visualiser = visualiser;
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'prepareVisualiser',
-        value: function prepareVisualiser(visualiser) {
-            this.analyser.fftSize = visualiser.fftSize;
-            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
-            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            var data = {
-                renderer: this.renderer,
-                width: this.canvas.clientWidth,
-                height: this.canvas.clientHeight
-            };
-            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
-            visualiser.resize(data);
-        }
-    }, {
-        key: 'setupListeners',
-        value: function setupListeners() {
-            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
-        }
-    }, {
-        key: 'renderLoop',
-        value: function renderLoop() {
-            var _this = this;
-
-            if (this.visualiser) {
-                if (this.analyser) {
-                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
-                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
-                }
-                this.visualiser.update({
-                    renderer: this.renderer,
-                    frequencyData: this.frequencyDataArray,
-                    timeDomainData: this.timeDomainDataArray
-                });
-            } else {
-                this.renderer.render(this.currentScene, this.currentCamera);
-            }
-            setTimeout(function () {
-                requestAnimationFrame(_this.renderLoop.bind(_this));
-            }, 1000 / 30);
-        }
-    }, {
-        key: 'getDefaultScene',
-        value: function getDefaultScene() {
-            var scene = new THREE.Scene();
-            var geometry = new THREE.BoxGeometry(1, 1, 1);
-            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            var cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
-            return scene;
-        }
-    }, {
-        key: 'getDefaultCamera',
-        value: function getDefaultCamera() {
-            var width = this.canvas.clientWidth;
-            var height = this.canvas.clientHeight;
-            var camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-            camera.position.z = 5;
-            return camera;
-        }
-    }, {
-        key: 'onParentResize',
-        value: function onParentResize() {
-            var width = this.parentElement.offsetWidth;
-            var height = this.parentElement.offsetHeight;
-            // this.canvas.width = width;
-            // this.canvas.height = height;
-            this.renderer.setSize(width, height);
-            // this.canvas.style.width = `${width}px`;
-            // this.canvas.style.height = `${height}px`;
-            // this.renderer.setViewport(0, 0, width, height);
-            if (this.visualiser) this.visualiser.resize({
-                renderer: this.renderer,
-                width: width,
-                height: height
-            });
-        }
-    }]);
-
-    return ThreeWrapper;
-}();
-
-module.exports = ThreeWrapper;
-
-/***/ }),
+/* 10 */,
 /* 11 */
 /***/ (function(module, exports) {
 
@@ -2257,19 +2090,20 @@ var UI = function () {
      * @param {object} data
      * @param {Element} data.container
      * @param {MusicPlayer} data.musicPlayer
+     * @param {VisualisationCore} data.visCore
      */
     function UI(data) {
         _classCallCheck(this, UI);
 
         this.container = data.container;
         this.musicPlayer = data.musicPlayer;
-        this.playing = false;
+        this.visCore = data.visCore;
     }
 
     _createClass(UI, [{
         key: 'start',
         value: function start() {
-            render(h(UIComponent, { musicPlayer: this.musicPlayer }), this.container);
+            render(h(UIComponent, { musicPlayer: this.musicPlayer, visCore: this.visCore }), this.container);
         }
     }]);
 
@@ -2316,10 +2150,13 @@ var UIComponent = function (_Component) {
 
         _this.state = {
             playerState: null,
-            trackList: null,
-            currentTrackIndex: null
+            trackList: [],
+            currentTrackIndex: null,
+            visualisers: [],
+            currentVisualiserIndex: null
         };
         props.musicPlayer.addListener(_this.playbackListener.bind(_this));
+        props.visCore.addListener(_this.visualiserListener.bind(_this));
         return _this;
     }
 
@@ -2330,6 +2167,14 @@ var UIComponent = function (_Component) {
                 playerState: playerState,
                 trackList: trackList,
                 currentTrackIndex: currentTrackIndex
+            });
+        }
+    }, {
+        key: 'visualiserListener',
+        value: function visualiserListener(visualisers, currentVisualiserIndex) {
+            this.setState({
+                visualisers: visualisers,
+                currentVisualiserIndex: currentVisualiserIndex
             });
         }
     }, {
@@ -2365,16 +2210,16 @@ var UIComponent = function (_Component) {
         value: function getTrackList() {
             var trackList = this.state.trackList;
             if (trackList) {
-                var tracks = [];
+                var trackComponents = [];
                 for (var i = 0; i < trackList.length; i++) {
                     var track = trackList[i];
                     var isActive = this.state.currentTrackIndex === i;
                     var activeClass = isActive ? 'active' : '';
                     var symbol = isActive ? this.getPlaybackSymbol() : '#' + (i + 1);
-                    tracks.push(h(
+                    trackComponents.push(h(
                         'a',
                         { href: '#', alt: 'Play track #' + (i + 1), onClick: this.playTrack.bind(this, i),
-                            className: 'akko-ui-track-list-item ' + activeClass },
+                            className: 'akko-ui-container-list-item ' + activeClass },
                         h(
                             'span',
                             null,
@@ -2386,8 +2231,8 @@ var UIComponent = function (_Component) {
                 }
                 return h(
                     'div',
-                    { className: 'akko-ui-track-list' },
-                    tracks
+                    { className: 'akko-ui-container-list' },
+                    trackComponents
                 );
             } else {
                 return null;
@@ -2409,6 +2254,45 @@ var UIComponent = function (_Component) {
             return this.state.playerState === PlayerStates.PLAYING;
         }
     }, {
+        key: 'useVisualiser',
+        value: function useVisualiser(index, event) {
+            event.preventDefault();
+            this.props.visCore.useVisualiser(index);
+        }
+    }, {
+        key: 'getVisualiserList',
+        value: function getVisualiserList() {
+            var visualisers = this.state.visualisers;
+            if (visualisers) {
+                var visualiserComponents = [];
+                for (var i = 0; i < visualisers.length; i++) {
+                    var visualiser = visualisers[i];
+                    var isActive = this.state.currentVisualiserIndex === i;
+                    var activeClass = isActive ? 'active' : '';
+                    var symbol = visualiser.code;
+                    visualiserComponents.push(h(
+                        'a',
+                        { href: '#', alt: 'Use visualiser #' + (i + 1), onClick: this.useVisualiser.bind(this, i),
+                            className: 'akko-ui-container-list-item ' + activeClass },
+                        h(
+                            'span',
+                            null,
+                            symbol
+                        ),
+                        ' ',
+                        visualiser.name
+                    ));
+                }
+                return h(
+                    'div',
+                    { className: 'akko-ui-container-list' },
+                    visualiserComponents
+                );
+            } else {
+                return null;
+            }
+        }
+    }, {
         key: 'render',
         value: function render() {
             return h(
@@ -2416,10 +2300,11 @@ var UIComponent = function (_Component) {
                 { className: 'akko-ui' },
                 h(
                     'div',
-                    { className: 'akko-ui-info' },
+                    { className: 'akko-ui-container akko-ui-tracks' },
                     h(
                         'div',
-                        { className: 'akko-ui-player-state' },
+                        { className: 'akko-ui-container-title' },
+                        'Player: ',
                         this.state.playerState
                     ),
                     this.getTrackList(),
@@ -2440,6 +2325,16 @@ var UIComponent = function (_Component) {
                         h('br', null),
                         'or drag & drop a file into the visualiser.'
                     )
+                ),
+                h(
+                    'div',
+                    { className: 'akko-ui-container akko-ui-visualisers' },
+                    h(
+                        'div',
+                        { className: 'akko-ui-container-title' },
+                        'Visualisers'
+                    ),
+                    this.getVisualiserList()
                 ),
                 h(
                     'div',
@@ -2608,6 +2503,7 @@ var BarVisualiser = function (_Visualiser) {
         key: 'onDestroy',
         value: function onDestroy() {
             delete this.scene;
+            delete this.camera;
         }
     }]);
 
@@ -2992,7 +2888,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var THREE = __webpack_require__(0);
 var Visualiser = __webpack_require__(15);
 
-var BAR_COUNT = 32;
+var RING_COUNT = 16;
 
 var RingVisualiser = function (_Visualiser) {
     _inherits(RingVisualiser, _Visualiser);
@@ -3003,7 +2899,7 @@ var RingVisualiser = function (_Visualiser) {
         return _possibleConstructorReturn(this, (RingVisualiser.__proto__ || Object.getPrototypeOf(RingVisualiser)).call(this, {
             code: 'Rn',
             name: 'Rings 2D',
-            fftSize: BAR_COUNT * 2,
+            fftSize: RING_COUNT * 2,
             smoothingTimeConstant: 0.9
         }));
     }
@@ -3012,91 +2908,46 @@ var RingVisualiser = function (_Visualiser) {
         key: 'onInit',
         value: function onInit(data) {
             this.setupSceneAndCamera(data);
-            this.setupLights(data);
-            this.setupPlane(data);
-            this.setupBars(data);
+            this.setupRings();
         }
     }, {
         key: 'setupSceneAndCamera',
         value: function setupSceneAndCamera(data) {
             this.scene = new THREE.Scene();
 
-            var halfWidth = data.width / 2;
-            var halfHeight = data.height / 2;
-            this.camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, 1, 1000);
-            this.camera.position.x = 5;
+            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+            this.camera.position.z = 20;
+            this.camera.lookAt(new THREE.Vector3(0, 0, 0));
             this.scene.add(this.camera);
         }
     }, {
-        key: 'setupLights',
-        value: function setupLights() {
-            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
-            this.scene.add(ambientLight);
-        }
-    }, {
-        key: 'setupPlane',
-        value: function setupPlane() {
-            var planeGeometry = new THREE.PlaneGeometry(200, 200, 1);
-            var planeMaterial = new THREE.MeshPhongMaterial({ color: 0x444444, side: THREE.DoubleSide });
-            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.receiveShadow = true;
-            plane.rotation.x = Math.PI / 2;
-            this.scene.add(plane);
-        }
-    }, {
-        key: 'setupBars',
-        value: function setupBars() {
-            this.bars = [];
-            this.lights = [];
-            this.cubeLights = [];
-            var step = 2 * Math.PI / BAR_COUNT;
-            var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
-            var radius = 5;
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var color = 0xff0000 + i * 5;
-                var bar = new THREE.Object3D();
-                var material = new THREE.MeshLambertMaterial({ color: color });
-                var cube = new THREE.Mesh(geometry, material);
-                var cubeLight = new THREE.PointLight(color, 0, 4);
-                cubeLight.position.y = 7;
-                cubeLight.position.x = -1;
-                cube.add(cubeLight);
-                var light = new THREE.PointLight(color, 0, 10);
-                light.position.y = 1;
-                light.position.x = 10;
-                bar.add(light);
-                bar.add(cube);
-                bar.position.x = radius;
-                cube.position.y = -4.8;
-                var pivot = new THREE.Object3D();
-                pivot.rotation.y = step * i;
-                pivot.add(bar);
-                this.scene.add(pivot);
-                this.bars.push(cube);
-                this.lights.push(light);
-                this.cubeLights.push(cubeLight);
+        key: 'setupRings',
+        value: function setupRings() {
+            this.rings = [];
+            var hslStep = 1 / RING_COUNT;
+            for (var i = 0; i < RING_COUNT; i++) {
+                var radius = 2 + i;
+                var segments = 64;
+                var material = new THREE.LineBasicMaterial({ color: 0x0000ff * i });
+                material.color.setHSL(hslStep * i, 1, 0.5);
+                var geometry = new THREE.CircleGeometry(radius, segments);
+                var ring = new THREE.Line(geometry, material);
+                this.scene.add(ring);
+                this.rings.push(ring);
             }
         }
     }, {
         key: 'onUpdate',
         value: function onUpdate(data) {
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var bar = this.bars[i];
-                var light = this.lights[i];
-                var cubeLight = this.cubeLights[i];
-                var frequency = Math.abs(data.frequencyData[i]);
+            for (var i = 0; i < RING_COUNT; i++) {
+                var ring = this.rings[i];
                 var timeDomain = data.timeDomainData[i];
-
-                var value = frequency * timeDomain;
-                if (value === Infinity || value === -Infinity) continue;
-                var newY = bar.position.y + (value - bar.position.y) / 30;
-                if (isNaN(newY)) continue;
-
-                light.intensity = Math.max(0, newY);
-                cubeLight.intensity = Math.max(0, newY) * 0.5;
-                bar.position.y = newY;
+                var frequency = Math.abs(data.frequencyData[i]);
+                var scale = this.lerp(ring.scale.x, frequency * timeDomain, 0.01);
+                scale = this.constrain(2, 0.5, scale);
+                ring.scale.set(scale, scale, scale);
+                ring.rotation.z += 0.002 * i;
             }
-            this.cameraPivot.rotation.y += 0.01;
             data.renderer.render(this.scene, this.camera);
         }
     }, {
@@ -3109,6 +2960,7 @@ var RingVisualiser = function (_Visualiser) {
         key: 'onDestroy',
         value: function onDestroy() {
             delete this.scene;
+            delete this.camera;
         }
     }]);
 
@@ -3116,6 +2968,194 @@ var RingVisualiser = function (_Visualiser) {
 }(Visualiser);
 
 module.exports = RingVisualiser;
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var elementResizeEvent = __webpack_require__(11);
+
+var Visualisers = __webpack_require__(2);
+
+var VisualisationCore = function () {
+
+    /**
+     * @param {object} data
+     * @param {Element} data.parentElement
+     * @param {boolean} data.useDefaultVisualizers
+     * @param {object} data.analyser
+     */
+    function VisualisationCore(data) {
+        _classCallCheck(this, VisualisationCore);
+
+        this.parentElement = data.parentElement;
+
+        this.frequencyDataArray = null;
+        this.analyser = data.analyser;
+
+        /**
+         * @callback visualiserListener
+         * @param {Track[]} visualisers
+         * @param {int} currentVisualiserIndex
+         */
+        /** @type {visualiserListener[]} */
+        this.listeners = [];
+
+        this.visualisers = data.useDefaultVisualizers ? this.prepareDefaultVisualisers() : [];
+        this.currentVisualiserIndex = -1;
+    }
+
+    _createClass(VisualisationCore, [{
+        key: 'prepareDefaultVisualisers',
+        value: function prepareDefaultVisualisers() {
+            var visualisers = [];
+            for (var key in Visualisers) {
+                if (!Visualisers.hasOwnProperty(key)) continue;
+                var visualiserClass = Visualisers[key];
+                visualisers.push(new visualiserClass());
+            }
+            return visualisers;
+        }
+    }, {
+        key: 'notifyListeners',
+        value: function notifyListeners() {
+            for (var i = 0; i < this.listeners.length; i++) {
+                var listener = this.listeners[i];
+                listener(this.visualisers, this.currentVisualiserIndex);
+            }
+        }
+
+        /**
+         * @param {visualiserListener} listener
+         */
+
+    }, {
+        key: 'addListener',
+        value: function addListener(listener) {
+            this.listeners.push(listener);
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'addVisualiser',
+        value: function addVisualiser(visualiser) {
+            this.visualisers.push(visualiser);
+        }
+    }, {
+        key: 'prepare',
+        value: function prepare() {
+            var width = this.parentElement.offsetWidth;
+            var height = this.parentElement.offsetHeight;
+
+            this.renderer = new THREE.WebGLRenderer();
+            this.renderer.setSize(width, height);
+            this.canvas = this.renderer.domElement;
+            this.parentElement.appendChild(this.canvas);
+        }
+    }, {
+        key: 'start',
+        value: function start() {
+            this.setupListeners();
+            this.renderLoop();
+            this.notifyListeners();
+        }
+
+        /**
+         * @param {int} index
+         */
+
+    }, {
+        key: 'useVisualiser',
+        value: function useVisualiser(index) {
+            var visualiser = this.visualisers[index];
+            if (visualiser) this.prepareVisualiser(visualiser);
+            if (this.visualiser) this.visualiser.pause();
+            this.currentVisualiserIndex = index;
+            this.visualiser = visualiser;
+            this.notifyListeners();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'prepareVisualiser',
+        value: function prepareVisualiser(visualiser) {
+            this.analyser.fftSize = visualiser.fftSize;
+            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
+            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            var data = {
+                renderer: this.renderer,
+                width: this.canvas.clientWidth,
+                height: this.canvas.clientHeight
+            };
+            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
+            visualiser.resize(data);
+        }
+    }, {
+        key: 'setupListeners',
+        value: function setupListeners() {
+            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
+        }
+    }, {
+        key: 'renderLoop',
+        value: function renderLoop() {
+            var _this = this;
+
+            if (this.visualiser) {
+                if (this.analyser) {
+                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
+                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
+                }
+                this.visualiser.update({
+                    renderer: this.renderer,
+                    frequencyData: this.frequencyDataArray,
+                    timeDomainData: this.timeDomainDataArray
+                });
+            } else {
+                // TODO: Display warning about no visualiser
+            }
+            setTimeout(function () {
+                requestAnimationFrame(_this.renderLoop.bind(_this));
+            }, 1000 / 30);
+        }
+    }, {
+        key: 'onParentResize',
+        value: function onParentResize() {
+            var width = this.parentElement.offsetWidth;
+            var height = this.parentElement.offsetHeight;
+            this.renderer.setSize(width, height);
+            if (this.visualiser) this.visualiser.resize({
+                renderer: this.renderer,
+                width: width,
+                height: height
+            });
+        }
+    }]);
+
+    return VisualisationCore;
+}();
+
+module.exports = VisualisationCore;
 
 /***/ })
 /******/ ]);

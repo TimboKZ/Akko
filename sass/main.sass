@@ -42,31 +42,34 @@ $button-bg-active-hover: transparentize(#c75e58, 0.2)
   @include transition(opacity 200ms ease-in-out)
   &:hover
     opacity: 1
-  &-info
+
+  &-container
     background-color: $background
     display: inline-block
+    position: relative
     font-size: 1rem
     padding: 10px
     color: #fff
+    &-title
+      background: $background
+      text-align: center
+      padding: 5px 10px
+    &-list
+      &-item
+        color: $text !important
+        text-decoration: none
+        margin-top: 10px
+        display: block
+        span
+          display: inline-block
+          text-align: right
+          opacity: 0.5
+          width: 20px
+        &.active
+          color: $brand !important
 
-  &-player-state
-    background: $background
-    text-align: center
-    padding: 5px 10px
-
-  &-track-list
-    &-item
-      color: $text !important
-      text-decoration: none
-      margin-top: 10px
-      display: block
-      span
-        display: inline-block
-        text-align: right
-        opacity: 0.5
-        width: 20px
-      &.active
-        color: $brand !important
+  &-visualisers
+    float: right
 
   &-add-tracks
     line-height: 1.4rem

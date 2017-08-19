@@ -15,15 +15,16 @@ class UI {
      * @param {object} data
      * @param {Element} data.container
      * @param {MusicPlayer} data.musicPlayer
+     * @param {VisualisationCore} data.visCore
      */
     constructor(data) {
         this.container = data.container;
         this.musicPlayer = data.musicPlayer;
-        this.playing = false;
+        this.visCore = data.visCore;
     }
 
     start() {
-        render(<UIComponent musicPlayer={this.musicPlayer} />, this.container);
+        render(<UIComponent musicPlayer={this.musicPlayer} visCore={this.visCore}/>, this.container);
     }
 
 }

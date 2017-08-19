@@ -14,10 +14,13 @@ class UIComponent extends Component {
         super(props);
         this.state = {
             playerState: null,
-            trackList: null,
+            trackList: [],
             currentTrackIndex: null,
+            visualisers: [],
+            currentVisualiserIndex: null,
         };
         props.musicPlayer.addListener(this.playbackListener.bind(this));
+        props.visCore.addListener(this.visualiserListener.bind(this));
     }
 
     playbackListener(playerState, trackList, currentTrackIndex) {
@@ -25,6 +28,13 @@ class UIComponent extends Component {
             playerState,
             trackList,
             currentTrackIndex,
+        });
+    }
+
+    visualiserListener(visualisers, currentVisualiserIndex) {
+        this.setState({
+            visualisers,
+            currentVisualiserIndex,
         });
     }
 
@@ -56,17 +66,17 @@ class UIComponent extends Component {
     getTrackList() {
         let trackList = this.state.trackList;
         if (trackList) {
-            let tracks = [];
+            let trackComponents = [];
             for (let i = 0; i < trackList.length; i++) {
                 let track = trackList[i];
                 let isActive = this.state.currentTrackIndex === i;
                 let activeClass = isActive ? 'active' : '';
                 let symbol = isActive ? this.getPlaybackSymbol() : `#${i + 1}`;
-                tracks.push(<a href="#" alt={`Play track #${i + 1}`} onClick={this.playTrack.bind(this, i)}
-                               className={`akko-ui-track-list-item ${activeClass}`}>
+                trackComponents.push(<a href="#" alt={`Play track #${i + 1}`} onClick={this.playTrack.bind(this, i)}
+                               className={`akko-ui-container-list-item ${activeClass}`}>
                     <span>{symbol}</span> {track.title}</a>);
             }
-            return <div className="akko-ui-track-list">{tracks}</div>;
+            return <div className="akko-ui-container-list">{trackComponents}</div>;
         } else {
             return null;
         }
@@ -84,11 +94,35 @@ class UIComponent extends Component {
         return this.state.playerState === PlayerStates.PLAYING;
     }
 
+    useVisualiser(index, event) {
+        event.preventDefault();
+        this.props.visCore.useVisualiser(index);
+    }
+
+    getVisualiserList() {
+        let visualisers = this.state.visualisers;
+        if (visualisers) {
+            let visualiserComponents = [];
+            for (let i = 0; i < visualisers.length; i++) {
+                let visualiser = visualisers[i];
+                let isActive = this.state.currentVisualiserIndex === i;
+                let activeClass = isActive ? 'active' : '';
+                let symbol = visualiser.code;
+                visualiserComponents.push(<a href="#" alt={`Use visualiser #${i + 1}`} onClick={this.useVisualiser.bind(this, i)}
+                               className={`akko-ui-container-list-item ${activeClass}`}>
+                    <span>{symbol}</span> {visualiser.name}</a>);
+            }
+            return <div className="akko-ui-container-list">{visualiserComponents}</div>;
+        } else {
+            return null;
+        }
+    }
+
     render() {
         return (
             <div className="akko-ui">
-                <div className="akko-ui-info">
-                    <div className="akko-ui-player-state">{this.state.playerState}</div>
+                <div className="akko-ui-container akko-ui-tracks">
+                    <div className="akko-ui-container-title">Player: {this.state.playerState}</div>
                     {this.getTrackList()}
                     <div className="akko-ui-add-tracks">
                         <a href="#" alt="Add a track by URL" onClick={this.addTrackByUrl.bind(this)}>Add track by
@@ -96,6 +130,10 @@ class UIComponent extends Component {
                         audio file</a>
                         <br/>or drag & drop a file into the visualiser.
                     </div>
+                </div>
+                <div className="akko-ui-container akko-ui-visualisers">
+                    <div className="akko-ui-container-title">Visualisers</div>
+                    {this.getVisualiserList()}
                 </div>
                 <div className="akko-ui-controls">
                     <a href="#" alt="Toggle playback" onClick={this.togglePlayback.bind(this)}
