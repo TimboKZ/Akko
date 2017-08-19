@@ -1832,13 +1832,14 @@ var MusicPlayer = function () {
         value: function start() {
             this.setState(PlayerStates.READY);
             if (this.autoPlay) this.playNextTrack();
+            this.started = true;
         }
     }, {
         key: 'playNextTrack',
         value: function playNextTrack() {
             var nextTrackIndex = this.currentTrackIndex + 1;
             if (nextTrackIndex >= this.trackList.length) {
-                this.setState(PlayerStates.FINISHED);
+                return this.setState(PlayerStates.FINISHED);
             }
             this.playTrack(nextTrackIndex);
         }
@@ -1926,7 +1927,7 @@ var MusicPlayer = function () {
             });
             var length = this.trackList.push(track);
             this.notifyListeners();
-            if (this.playing) this.playTrack(length - 1);
+            if (this.started) this.playTrack(length - 1);
         }
     }, {
         key: 'getAnalyser',
