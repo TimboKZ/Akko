@@ -23,9 +23,9 @@
         <h1>Custom Akko visualiser written in ES6.</h1>
 
         <p>Check the page source code to see how the visualiser was implemented. In this example visualiser is defined
-            inline, but normally you would put it in a separate <code>.js</code> file. Additionally, this custom
-            visualiser
-            was implemented using EcmaScript 6.</p>
+            inline, but normally you would put it in a separate <code>.js</code> file. Note that this custom
+            visualiser was implemented using EcmaScript 6. <a href="./akko-custom-es5.html">Click here</a> for the ES5
+            version.</p>
 
         <p><a href="../index.html">Click here</a> to go back to Index page.</p>
 
@@ -43,6 +43,7 @@
         <script>
             // Amount of cubes to draw, must be a power of 2 since we're using it for `fftSize` below
             const CUBE_COUNT = 16;
+
             class CustomVisualiser extends Akko.Visualiser {
                 constructor() {
                     super({

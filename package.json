@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
     "watch": "webpack --watch",
     "examples": "http-server -c-1"
   },
@@ -48,8 +49,10 @@
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "css-loader": "^0.28.4",
+    "eslint": "^4.5.0",
     "extract-text-webpack-plugin": "^3.0.0",
     "http-server": "^0.10.0",
+    "nightmare": "^2.10.0",
     "node-sass": "^4.5.3",
     "sass-loader": "^6.0.6",
     "webpack": "^3.5.5",

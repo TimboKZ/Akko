@@ -61,7 +61,7 @@ var Akko =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,6 +72,455 @@ module.exports = THREE;
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Helper = __webpack_require__(15);
+
+/**
+ * @abstract
+ */
+
+var Visualiser = function (_Helper) {
+    _inherits(Visualiser, _Helper);
+
+    /**
+     * @param {object} data
+     * @param {string} data.code
+     * @param {string} data.name
+     * @param {int} data.fftSize
+     * @param {number} data.smoothingTimeConstant
+     */
+    function Visualiser(data) {
+        _classCallCheck(this, Visualiser);
+
+        var _this = _possibleConstructorReturn(this, (Visualiser.__proto__ || Object.getPrototypeOf(Visualiser)).call(this));
+
+        _this.code = data.code || 'UV';
+        _this.name = data.name || 'Untitled Visualiser';
+        _this.fftSize = data.fftSize || 128;
+        _this.smoothingTimeConstant = data.smoothingTimeConstant || 0;
+        _this.initialised = false;
+        _this.paused = false;
+        return _this;
+    }
+
+    /**
+     * @param {object} data
+     * @param {THREE.WebGLRenderer} data.renderer
+     * @param {AnalyserNode} data.analyser
+     * @param {number} data.height
+     * @param {number} data.width
+     */
+
+
+    _createClass(Visualiser, [{
+        key: 'init',
+        value: function init(data) {
+            this.onInit(data);
+            this.initialised = true;
+        }
+
+        /**
+         * @abstract
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+        // eslint-disable-next-line
+
+    }, {
+        key: 'onInit',
+        value: function onInit(data) {
+            throw new Error('The \'onInit\' method was not defined on ' + this.name + '!');
+        }
+
+        /**
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+
+    }, {
+        key: 'revive',
+        value: function revive(data) {
+            this.onRevive(data);
+            this.paused = false;
+        }
+
+        /**
+         * @abstract
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+        // eslint-disable-next-line
+
+    }, {
+        key: 'onRevive',
+        value: function onRevive(data) {}
+
+        /**
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {Float32Array} data.frequencyData
+         * @param {Float32Array} data.timeDomainData
+         */
+
+    }, {
+        key: 'update',
+        value: function update(data) {
+            this.onUpdate(data);
+        }
+
+        /**
+         * @abstract
+         * @param {object} data
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {Float32Array} data.frequencyData
+         * @param {Float32Array} data.timeDomainData
+         */
+        // eslint-disable-next-line
+
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(data) {
+            throw new Error('The \'onUpdate\' method was not defined on ' + this.name + '!');
+        }
+
+        /**
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+
+    }, {
+        key: 'resize',
+        value: function resize(data) {
+            this.onResize(data);
+        }
+
+        /**
+         * @abstract
+         * @param {THREE.WebGLRenderer} data.renderer
+         * @param {AnalyserNode} data.analyser
+         * @param {number} data.height
+         * @param {number} data.width
+         */
+        // eslint-disable-next-line
+
+    }, {
+        key: 'onResize',
+        value: function onResize(data) {}
+    }, {
+        key: 'pause',
+        value: function pause() {
+            this.onPause();
+            this.paused = true;
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onPause',
+        value: function onPause() {}
+    }, {
+        key: 'destroy',
+        value: function destroy() {
+            this.onDestroy();
+        }
+
+        /**
+         * @abstract
+         */
+
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            throw new Error('The \'onDestroy\' method was not defined on ' + this.name + '!');
+        }
+    }, {
+        key: 'error',
+        value: function error(message) {
+            // TODO: Draw error message on canvas
+            throw new Error(message);
+        }
+    }, {
+        key: 'isInitialised',
+        value: function isInitialised() {
+            return this.initialised;
+        }
+    }, {
+        key: 'isPaused',
+        value: function isPaused() {
+            return this.paused;
+        }
+    }]);
+
+    return Visualiser;
+}(Helper);
+
+module.exports = Visualiser;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Promise = __webpack_require__(10);
+var Track = __webpack_require__(11);
+
+var PlayerStates = {
+    LOADING: 'Loading...',
+    READY: 'Ready!',
+    PLAYING: 'Playing...',
+    PAUSED: 'Paused.',
+    FINISHED: 'Finished!'
+};
+
+var MusicPlayer = function () {
+
+    /**
+     * @param data
+     * @param {AudioContext} data.audioContext
+     * @param {boolean} data.autoPlay
+     */
+    function MusicPlayer(data) {
+        _classCallCheck(this, MusicPlayer);
+
+        this.context = data.audioContext;
+        this.autoPlay = data.autoPlay;
+        this.gain = this.context.createGain();
+        this.gain.connect(this.context.destination);
+        this.analyser = this.context.createAnalyser();
+        this.analyser.connect(this.context.destination);
+
+        this.buffer = null;
+        this.sourceNode = this.context.createBufferSource();
+        this.startedAt = 0;
+        this.pausedAt = 0;
+        this.playing = false;
+
+        /**
+         * @callback playbackListener
+         * @param {string} playerState
+         * @param {Track[]} trackList
+         * @param {int} currentTrackIndex
+         */
+        /** @type {playbackListener[]} */
+        this.listeners = [];
+
+        /** @type {Track[]} */
+        this.trackList = [];
+        this.currentTrackIndex = -1;
+
+        this.setState(PlayerStates.READY);
+    }
+
+    _createClass(MusicPlayer, [{
+        key: 'setState',
+        value: function setState(newState) {
+            this.state = newState;
+            this.notifyListeners();
+        }
+    }, {
+        key: 'notifyListeners',
+        value: function notifyListeners() {
+            for (var i = 0; i < this.listeners.length; i++) {
+                var listener = this.listeners[i];
+                listener(this.state, this.trackList, this.currentTrackIndex);
+            }
+        }
+
+        /**
+         * @param {playbackListener} listener
+         */
+
+    }, {
+        key: 'addListener',
+        value: function addListener(listener) {
+            this.listeners.push(listener);
+        }
+    }, {
+        key: 'start',
+        value: function start() {
+            this.setState(PlayerStates.READY);
+            if (this.autoPlay) this.playNextTrack();
+            this.started = true;
+        }
+
+        /**
+         * @param {int} [currentTrackIndex] Current track index override
+         */
+
+    }, {
+        key: 'playNextTrack',
+        value: function playNextTrack(currentTrackIndex) {
+            var currentIndex = currentTrackIndex || this.currentTrackIndex;
+            var nextTrackIndex = currentIndex + 1;
+            if (nextTrackIndex >= this.trackList.length) {
+                return this.setState(PlayerStates.FINISHED);
+            }
+            this.playTrack(nextTrackIndex);
+        }
+    }, {
+        key: 'playTrack',
+        value: function playTrack(index) {
+            var _this = this;
+
+            this.setState(PlayerStates.LOADING);
+            var track = this.trackList[index];
+            Promise.resolve().then(function () {
+                return track.prepareArrayBuffer();
+            }).then(function (arrayBuffer) {
+                return _this.context.decodeAudioData(arrayBuffer);
+            }).then(function (audioBuffer) {
+                _this.buffer = audioBuffer;
+                _this.stop();
+                _this.play();
+                _this.currentTrackIndex = index;
+                _this.setState(PlayerStates.PLAYING);
+            }).catch(function (error) {
+                console.error('Error preparing track:', error);
+                console.warn('Skipping \'' + track.title + '\'!');
+                return _this.playNextTrack(index);
+            });
+        }
+    }, {
+        key: 'togglePlayback',
+        value: function togglePlayback() {
+            if (this.playing) {
+                this.pause();
+            } else {
+                if (this.buffer === null) this.playNextTrack();else this.play();
+            }
+            return this.playing;
+        }
+    }, {
+        key: 'play',
+        value: function play() {
+            var offset = this.pausedAt;
+            this.sourceNode = this.context.createBufferSource();
+            this.sourceNode.connect(this.gain);
+            this.sourceNode.connect(this.analyser);
+            this.sourceNode.buffer = this.buffer;
+            this.sourceNode.onended = this.ended.bind(this);
+            this.sourceNode.start(0, offset);
+            this.startedAt = this.context.currentTime - offset;
+            this.pausedAt = 0;
+            this.playing = true;
+            this.setState(PlayerStates.PLAYING);
+        }
+    }, {
+        key: 'pause',
+        value: function pause() {
+            if (!this.playing) return;
+            var elapsed = this.context.currentTime - this.startedAt;
+            this.stop();
+            this.pausedAt = elapsed;
+            this.setState(PlayerStates.PAUSED);
+        }
+    }, {
+        key: 'stop',
+        value: function stop() {
+            if (!this.playing) return;
+            if (this.sourceNode) {
+                this.sourceNode.disconnect();
+                this.sourceNode.stop(0);
+                this.sourceNode = null;
+            }
+            this.pausedAt = 0;
+            this.startedAt = 0;
+            this.playing = false;
+        }
+    }, {
+        key: 'ended',
+        value: function ended() {
+            this.playNextTrack();
+        }
+    }, {
+        key: 'addTrack',
+        value: function addTrack(source, title) {
+            var track = new Track({
+                source: source,
+                title: title
+            });
+            var length = this.trackList.push(track);
+            this.notifyListeners();
+            if (this.started) this.playTrack(length - 1);
+        }
+    }, {
+        key: 'getAnalyser',
+        value: function getAnalyser() {
+            return this.analyser;
+        }
+    }]);
+
+    return MusicPlayer;
+}();
+
+module.exports = MusicPlayer;
+module.exports.States = PlayerStates;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+module.exports = {
+  BarVisualiser: __webpack_require__(14),
+  RingVisualiser: __webpack_require__(16)
+};
+
+/***/ }),
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1049,40 +1498,22 @@ var preact = {
 
 
 /***/ }),
-/* 2 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-module.exports = {
-  BarVisualiser: __webpack_require__(14),
-  RingVisualiser: __webpack_require__(19)
-};
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(4);
-__webpack_require__(5);
-module.exports = __webpack_require__(6);
+__webpack_require__(6);
+__webpack_require__(7);
+module.exports = __webpack_require__(8);
 
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports) {
 
 (function(self) {
@@ -1549,7 +1980,7 @@ module.exports = __webpack_require__(6);
 
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1561,16 +1992,16 @@ module.exports = __webpack_require__(6);
  * @license GPL-3.0
  */
 
-var Akko = __webpack_require__(7);
-var Visualiser = __webpack_require__(15);
-var Visualisers = __webpack_require__(2);
+var Akko = __webpack_require__(9);
+var Visualiser = __webpack_require__(1);
+var Visualisers = __webpack_require__(3);
 
 module.exports = Akko;
 module.exports.Visualiser = Visualiser;
 module.exports.visualisers = Visualisers;
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1588,9 +2019,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var THREE = __webpack_require__(0);
 
-var MusicPlayer = __webpack_require__(8);
-var VisualisationCore = __webpack_require__(20);
-var UI = __webpack_require__(12);
+var MusicPlayer = __webpack_require__(2);
+var VisualisationCore = __webpack_require__(12);
+var UI = __webpack_require__(17);
 
 /**
  * @type {{containerId: string, useDefaultVisualisers: boolean, autoPlay: boolean}}
@@ -1737,7 +2168,13 @@ var Akko = function () {
 module.exports = Akko;
 
 /***/ }),
-/* 8 */
+/* 10 */
+/***/ (function(module, exports) {
+
+module.exports = Promise;
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1753,204 +2190,283 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @license GPL-3.0
  */
 
-var Promise = __webpack_require__(9);
-var Track = __webpack_require__(18);
-
-var PlayerStates = {
-    LOADING: 'Loading...',
-    READY: 'Ready!',
-    PLAYING: 'Playing...',
-    PAUSED: 'Paused.',
-    FINISHED: 'Finished!'
+var SourceTypes = {
+    URL: 'url',
+    FILE: 'file',
+    ARRAY_BUFFER: 'arrayBuffer'
 };
 
-var MusicPlayer = function () {
+var Track = function () {
 
     /**
-     * @param data
-     * @param {AudioContext} data.audioContext
-     * @param {boolean} data.autoPlay
+     * @param {object} data
+     * @param {string|File} data.source
+     * @param {string} [data.title]
      */
-    function MusicPlayer(data) {
-        _classCallCheck(this, MusicPlayer);
+    function Track(data) {
+        _classCallCheck(this, Track);
 
-        this.context = data.audioContext;
-        this.autoPlay = data.autoPlay;
-        this.gain = this.context.createGain();
-        this.gain.connect(this.context.destination);
-        this.analyser = this.context.createAnalyser();
-        this.analyser.connect(this.context.destination);
-
-        this.buffer = null;
-        this.sourceNode = this.context.createBufferSource();
-        this.startedAt = 0;
-        this.pausedAt = 0;
-        this.playing = false;
-
-        /**
-         * @callback playbackListener
-         * @param {string} playerState
-         * @param {Track[]} trackList
-         * @param {int} currentTrackIndex
-         */
-        /** @type {playbackListener[]} */
-        this.listeners = [];
-
-        /** @type {Track[]} */
-        this.trackList = [];
-        this.currentTrackIndex = -1;
-
-        this.setState(PlayerStates.READY);
+        this.source = data.source;
+        this.title = data.title;
+        this.arrayBufferCache = null;
+        this.analyseSource();
     }
 
-    _createClass(MusicPlayer, [{
-        key: 'setState',
-        value: function setState(newState) {
-            this.state = newState;
-            this.notifyListeners();
+    _createClass(Track, [{
+        key: 'analyseSource',
+        value: function analyseSource() {
+            if (typeof this.source === 'string') {
+                this.sourceType = SourceTypes.URL;
+                this.title = this.title || decodeURIComponent(this.source.split('/').pop().replace(/\.[a-zA-Z0-9]+$/, ''));
+            } else if (this.source instanceof File) {
+                this.sourceType = SourceTypes.FILE;
+                this.title = this.title || this.source.name.replace(/\.[a-zA-Z0-9]+$/, '');
+            } else if (this.source instanceof ArrayBuffer) {
+                this.sourceType = SourceTypes.ARRAY_BUFFER;
+                this.title = this.title || 'Untitled';
+            } else {
+                throw new Error('\'Unsupported Track source type: ' + this.source);
+            }
+        }
+
+        /**
+         * @return {Promise.<ArrayBuffer>}
+         */
+
+    }, {
+        key: 'prepareArrayBuffer',
+        value: function prepareArrayBuffer() {
+            var _this = this;
+
+            if (this.arrayBufferCache) return Promise.resolve(this.arrayBufferCache);
+            switch (this.sourceType) {
+                case SourceTypes.URL:
+                    return window.fetch(this.source).then(function (response) {
+                        var arrayBuffer = response.arrayBuffer();
+                        _this.arrayBufferCache = arrayBuffer;
+                        return arrayBuffer;
+                    });
+                case SourceTypes.FILE:
+                    return new Promise(function (resolve, reject) {
+                        var reader = new window.FileReader();
+                        reader.onload = function (fileEvent) {
+                            var arrayBuffer = fileEvent.target.result;
+                            _this.arrayBufferCache = arrayBuffer;
+                            resolve(arrayBuffer);
+                        };
+                        reader.onerror = function (error) {
+                            reject(error);
+                        };
+                        reader.readAsArrayBuffer(_this.source);
+                    });
+                case SourceTypes.ARRAY_BUFFER:
+                    return Promise.resolve(this.source);
+                default:
+                    return Promise.reject(new Error('\'Unsupported track source type: ' + this.sourceType));
+            }
+        }
+    }]);
+
+    return Track;
+}();
+
+module.exports = Track;
+module.exports.SourceTypes = SourceTypes;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var elementResizeEvent = __webpack_require__(13);
+
+var Visualisers = __webpack_require__(3);
+
+var VisualisationCore = function () {
+
+    /**
+     * @param {object} data
+     * @param {Element} data.parentElement
+     * @param {boolean} data.useDefaultVisualisers
+     * @param {object} data.analyser
+     */
+    function VisualisationCore(data) {
+        _classCallCheck(this, VisualisationCore);
+
+        this.parentElement = data.parentElement;
+
+        this.frequencyDataArray = null;
+        this.analyser = data.analyser;
+
+        /**
+         * @callback visualiserListener
+         * @param {Track[]} visualisers
+         * @param {int} currentVisualiserIndex
+         */
+        /** @type {visualiserListener[]} */
+        this.listeners = [];
+
+        this.visualisers = data.useDefaultVisualisers ? this.prepareDefaultVisualisers() : [];
+        this.currentVisualiserIndex = -1;
+    }
+
+    _createClass(VisualisationCore, [{
+        key: 'prepareDefaultVisualisers',
+        value: function prepareDefaultVisualisers() {
+            var visualisers = [];
+            for (var key in Visualisers) {
+                if (!Visualisers.hasOwnProperty(key)) continue;
+                var visualiserClass = Visualisers[key];
+                visualisers.push(new visualiserClass());
+            }
+            return visualisers;
         }
     }, {
         key: 'notifyListeners',
         value: function notifyListeners() {
             for (var i = 0; i < this.listeners.length; i++) {
                 var listener = this.listeners[i];
-                listener(this.state, this.trackList, this.currentTrackIndex);
+                listener(this.visualisers, this.currentVisualiserIndex);
             }
         }
 
         /**
-         * @param {playbackListener} listener
+         * @param {visualiserListener} listener
          */
 
     }, {
         key: 'addListener',
         value: function addListener(listener) {
             this.listeners.push(listener);
+            this.notifyListeners();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'addVisualiser',
+        value: function addVisualiser(visualiser) {
+            this.visualisers.push(visualiser);
+            this.notifyListeners();
+        }
+    }, {
+        key: 'prepare',
+        value: function prepare() {
+            var width = this.parentElement.offsetWidth;
+            var height = this.parentElement.offsetHeight;
+
+            this.renderer = new THREE.WebGLRenderer();
+            this.renderer.setSize(width, height);
+            this.canvas = this.renderer.domElement;
+            this.parentElement.appendChild(this.canvas);
         }
     }, {
         key: 'start',
         value: function start() {
-            this.setState(PlayerStates.READY);
-            if (this.autoPlay) this.playNextTrack();
-            this.started = true;
+            this.setupListeners();
+            this.renderLoop();
+            this.notifyListeners();
+        }
+
+        /**
+         * @param {int} index
+         */
+
+    }, {
+        key: 'useVisualiser',
+        value: function useVisualiser(index) {
+            var visualiser = this.visualisers[index];
+            if (visualiser) this.prepareVisualiser(visualiser);
+            if (this.visualiser) this.visualiser.pause();
+            this.currentVisualiserIndex = index;
+            this.visualiser = visualiser;
+            this.notifyListeners();
+        }
+
+        /**
+         * @param {Visualiser} visualiser
+         */
+
+    }, {
+        key: 'prepareVisualiser',
+        value: function prepareVisualiser(visualiser) {
+            this.analyser.fftSize = visualiser.fftSize;
+            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
+            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
+            var data = {
+                renderer: this.renderer,
+                analyser: this.analyser,
+                width: this.canvas.clientWidth,
+                height: this.canvas.clientHeight
+            };
+            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
+            visualiser.resize(data);
         }
     }, {
-        key: 'playNextTrack',
-        value: function playNextTrack() {
-            var nextTrackIndex = this.currentTrackIndex + 1;
-            if (nextTrackIndex >= this.trackList.length) {
-                return this.setState(PlayerStates.FINISHED);
-            }
-            this.playTrack(nextTrackIndex);
+        key: 'setupListeners',
+        value: function setupListeners() {
+            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
         }
     }, {
-        key: 'playTrack',
-        value: function playTrack(index) {
+        key: 'renderLoop',
+        value: function renderLoop() {
             var _this = this;
 
-            this.setState(PlayerStates.LOADING);
-            var track = this.trackList[index];
-            Promise.resolve().then(function () {
-                return track.prepareArrayBuffer();
-            }).then(function (arrayBuffer) {
-                return _this.context.decodeAudioData(arrayBuffer);
-            }).then(function (audioBuffer) {
-                _this.buffer = audioBuffer;
-                _this.stop();
-                _this.play();
-                _this.currentTrackIndex = index;
-                _this.setState(PlayerStates.PLAYING);
-            }).catch(function (error) {
-                console.error('Error preparing track:', error);
-                console.warn('Skipping \'' + track.title + '\'!');
-                return _this.playNextTrack();
-            });
-        }
-    }, {
-        key: 'togglePlayback',
-        value: function togglePlayback() {
-            if (this.playing) {
-                this.pause();
+            if (this.visualiser) {
+                if (this.analyser) {
+                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
+                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
+                }
+                this.visualiser.update({
+                    renderer: this.renderer,
+                    analyser: this.analyser,
+                    frequencyData: this.frequencyDataArray,
+                    timeDomainData: this.timeDomainDataArray
+                });
             } else {
-                if (this.buffer === null) this.playNextTrack();else this.play();
+                // TODO: Display warning about no visualiser
             }
-            return this.playing;
+            setTimeout(function () {
+                requestAnimationFrame(_this.renderLoop.bind(_this));
+            }, 1000 / 30);
         }
     }, {
-        key: 'play',
-        value: function play() {
-            var offset = this.pausedAt;
-            this.sourceNode = this.context.createBufferSource();
-            this.sourceNode.connect(this.gain);
-            this.sourceNode.connect(this.analyser);
-            this.sourceNode.buffer = this.buffer;
-            this.sourceNode.onended = this.ended.bind(this);
-            this.sourceNode.start(0, offset);
-            this.startedAt = this.context.currentTime - offset;
-            this.pausedAt = 0;
-            this.playing = true;
-            this.setState(PlayerStates.PLAYING);
-        }
-    }, {
-        key: 'pause',
-        value: function pause() {
-            if (!this.playing) return;
-            var elapsed = this.context.currentTime - this.startedAt;
-            this.stop();
-            this.pausedAt = elapsed;
-            this.setState(PlayerStates.PAUSED);
-        }
-    }, {
-        key: 'stop',
-        value: function stop() {
-            if (!this.playing) return;
-            if (this.sourceNode) {
-                this.sourceNode.disconnect();
-                this.sourceNode.stop(0);
-                this.sourceNode = null;
-            }
-            this.pausedAt = 0;
-            this.startedAt = 0;
-            this.playing = false;
-        }
-    }, {
-        key: 'ended',
-        value: function ended() {
-            this.playNextTrack();
-        }
-    }, {
-        key: 'addTrack',
-        value: function addTrack(source, title) {
-            var track = new Track({
-                source: source,
-                title: title
+        key: 'onParentResize',
+        value: function onParentResize() {
+            var width = this.parentElement.offsetWidth;
+            var height = this.parentElement.offsetHeight;
+            this.renderer.setSize(width, height);
+            if (this.visualiser) this.visualiser.resize({
+                renderer: this.renderer,
+                width: width,
+                height: height
             });
-            var length = this.trackList.push(track);
-            this.notifyListeners();
-            if (this.started) this.playTrack(length - 1);
-        }
-    }, {
-        key: 'getAnalyser',
-        value: function getAnalyser() {
-            return this.analyser;
         }
     }]);
 
-    return MusicPlayer;
+    return VisualisationCore;
 }();
 
-module.exports = MusicPlayer;
-module.exports.States = PlayerStates;
+module.exports = VisualisationCore;
 
 /***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-module.exports = Promise;
-
-/***/ }),
-/* 10 */,
-/* 11 */
+/* 13 */
 /***/ (function(module, exports) {
 
 var requestFrame = (function () {
@@ -2067,7 +2583,303 @@ module.exports.unbind = function (element, fn) {
 
 
 /***/ }),
-/* 12 */
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var Visualiser = __webpack_require__(1);
+
+var BAR_COUNT = 32;
+
+var BarVisualiser = function (_Visualiser) {
+    _inherits(BarVisualiser, _Visualiser);
+
+    function BarVisualiser() {
+        _classCallCheck(this, BarVisualiser);
+
+        return _possibleConstructorReturn(this, (BarVisualiser.__proto__ || Object.getPrototypeOf(BarVisualiser)).call(this, {
+            code: 'Ba',
+            name: 'Bars 3D',
+            fftSize: BAR_COUNT * 2,
+            smoothingTimeConstant: 0.9
+        }));
+    }
+
+    _createClass(BarVisualiser, [{
+        key: 'onInit',
+        value: function onInit(data) {
+            this.setupSceneAndCamera(data);
+            this.setupLights(data);
+            this.setupPlane(data);
+            this.setupBars(data);
+        }
+    }, {
+        key: 'setupSceneAndCamera',
+        value: function setupSceneAndCamera(data) {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+            this.camera.position.set(0, 15, 17);
+            this.camera.rotation.x = -Math.PI / 4;
+            this.cameraPivot = new THREE.Object3D();
+            this.cameraPivot.add(this.camera);
+            this.cameraPivot.castShadow = true;
+            this.scene.add(this.cameraPivot);
+        }
+    }, {
+        key: 'setupLights',
+        value: function setupLights() {
+            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            this.scene.add(ambientLight);
+        }
+    }, {
+        key: 'setupPlane',
+        value: function setupPlane() {
+            var planeGeometry = new THREE.PlaneGeometry(200, 200, 1);
+            var planeMaterial = new THREE.MeshPhongMaterial({ color: 0x444444, side: THREE.DoubleSide });
+            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.receiveShadow = true;
+            plane.rotation.x = Math.PI / 2;
+            this.scene.add(plane);
+        }
+    }, {
+        key: 'setupBars',
+        value: function setupBars() {
+            this.bars = [];
+            this.lights = [];
+            this.cubeLights = [];
+            var step = 2 * Math.PI / BAR_COUNT;
+            var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
+            var radius = 5;
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var color = 0xff0000 + i * 5;
+                var bar = new THREE.Object3D();
+                var material = new THREE.MeshLambertMaterial({ color: color });
+                var cube = new THREE.Mesh(geometry, material);
+                var cubeLight = new THREE.PointLight(color, 0, 4);
+                cubeLight.position.y = 7;
+                cubeLight.position.x = -1;
+                cube.add(cubeLight);
+                var light = new THREE.PointLight(color, 0, 10);
+                light.position.y = 1;
+                light.position.x = 10;
+                bar.add(light);
+                bar.add(cube);
+                bar.position.x = radius;
+                cube.position.y = -4.8;
+                var pivot = new THREE.Object3D();
+                pivot.rotation.y = step * i;
+                pivot.add(bar);
+                this.scene.add(pivot);
+                this.bars.push(cube);
+                this.lights.push(light);
+                this.cubeLights.push(cubeLight);
+            }
+        }
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(data) {
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var bar = this.bars[i];
+                var light = this.lights[i];
+                var cubeLight = this.cubeLights[i];
+                var frequency = Math.abs(data.frequencyData[i]);
+                var timeDomain = data.timeDomainData[i];
+
+                var value = frequency * timeDomain;
+                if (value === Infinity || value === -Infinity) continue;
+                var newY = bar.position.y + (value - bar.position.y) / 30;
+                if (isNaN(newY)) continue;
+
+                light.intensity = Math.max(0, newY);
+                cubeLight.intensity = Math.max(0, newY) * 0.5;
+                bar.position.y = newY;
+            }
+            this.cameraPivot.rotation.y += 0.01;
+            data.renderer.render(this.scene, this.camera);
+        }
+    }, {
+        key: 'onResize',
+        value: function onResize(data) {
+            this.camera.aspect = data.width / data.height;
+            this.camera.updateProjectionMatrix();
+        }
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            delete this.scene;
+            delete this.camera;
+        }
+    }]);
+
+    return BarVisualiser;
+}(Visualiser);
+
+module.exports = BarVisualiser;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var Helper = function () {
+    function Helper() {
+        _classCallCheck(this, Helper);
+    }
+
+    _createClass(Helper, [{
+        key: "lerp",
+        value: function lerp(current, target, fraction) {
+            if (isNaN(target) || target === Infinity || target === -Infinity) return current;
+            return current + (target - current) * fraction;
+        }
+    }, {
+        key: "constrain",
+        value: function constrain(max, min, value) {
+            return Math.min(max, Math.max(min, value));
+        }
+    }]);
+
+    return Helper;
+}();
+
+module.exports = Helper;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+/**
+ * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
+ * @copyright 2017
+ * @license GPL-3.0
+ */
+
+var THREE = __webpack_require__(0);
+var Visualiser = __webpack_require__(1);
+
+var RING_COUNT = 16;
+
+var RingVisualiser = function (_Visualiser) {
+    _inherits(RingVisualiser, _Visualiser);
+
+    function RingVisualiser() {
+        _classCallCheck(this, RingVisualiser);
+
+        return _possibleConstructorReturn(this, (RingVisualiser.__proto__ || Object.getPrototypeOf(RingVisualiser)).call(this, {
+            code: 'Rn',
+            name: 'Rings 2D',
+            fftSize: RING_COUNT * 2,
+            smoothingTimeConstant: 0.9
+        }));
+    }
+
+    _createClass(RingVisualiser, [{
+        key: 'onInit',
+        value: function onInit(data) {
+            this.setupSceneAndCamera(data);
+            this.setupRings();
+        }
+    }, {
+        key: 'setupSceneAndCamera',
+        value: function setupSceneAndCamera(data) {
+            this.scene = new THREE.Scene();
+
+            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+            this.camera.position.z = 20;
+            this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+            this.scene.add(this.camera);
+        }
+    }, {
+        key: 'setupRings',
+        value: function setupRings() {
+            this.rings = [];
+            var hslStep = 1 / RING_COUNT;
+            for (var i = 0; i < RING_COUNT; i++) {
+                var radius = 2 + i;
+                var segments = 64;
+                var material = new THREE.LineBasicMaterial({ color: 0x0000ff * i });
+                material.color.setHSL(hslStep * i, 1, 0.5);
+                var geometry = new THREE.CircleGeometry(radius, segments);
+                var ring = new THREE.Line(geometry, material);
+                this.scene.add(ring);
+                this.rings.push(ring);
+            }
+        }
+    }, {
+        key: 'onUpdate',
+        value: function onUpdate(data) {
+            for (var i = 0; i < RING_COUNT; i++) {
+                var ring = this.rings[i];
+                var timeDomain = data.timeDomainData[i];
+                var frequency = Math.abs(data.frequencyData[i]);
+                var scale = this.lerp(ring.scale.x, frequency * timeDomain, 0.01);
+                scale = this.constrain(2, 0.5, scale);
+                ring.scale.set(scale, scale, scale);
+                ring.rotation.z += 0.002 * i;
+            }
+            data.renderer.render(this.scene, this.camera);
+        }
+    }, {
+        key: 'onResize',
+        value: function onResize(data) {
+            this.camera.aspect = data.width / data.height;
+            this.camera.updateProjectionMatrix();
+        }
+    }, {
+        key: 'onDestroy',
+        value: function onDestroy() {
+            delete this.scene;
+            delete this.camera;
+        }
+    }]);
+
+    return RingVisualiser;
+}(Visualiser);
+
+module.exports = RingVisualiser;
+
+/***/ }),
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2084,13 +2896,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  */
 
 // eslint-disable-next-line
-var _require = __webpack_require__(1),
+var _require = __webpack_require__(4),
     render = _require.render,
     h = _require.h;
 // eslint-disable-next-line
 
 
-var UIComponent = __webpack_require__(13);
+var UIComponent = __webpack_require__(18);
 
 var UI = function () {
 
@@ -2121,7 +2933,7 @@ var UI = function () {
 module.exports = UI;
 
 /***/ }),
-/* 13 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2142,11 +2954,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  */
 
 // eslint-disable-next-line
-var _require = __webpack_require__(1),
+var _require = __webpack_require__(4),
     Component = _require.Component,
     h = _require.h;
 
-var PlayerStates = __webpack_require__(8).States;
+var PlayerStates = __webpack_require__(2).States;
 
 var UIComponent = function (_Component) {
     _inherits(UIComponent, _Component);
@@ -2388,802 +3200,6 @@ var UIComponent = function (_Component) {
 }(Component);
 
 module.exports = UIComponent;
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-var Visualiser = __webpack_require__(15);
-
-var BAR_COUNT = 32;
-
-var BarVisualiser = function (_Visualiser) {
-    _inherits(BarVisualiser, _Visualiser);
-
-    function BarVisualiser() {
-        _classCallCheck(this, BarVisualiser);
-
-        return _possibleConstructorReturn(this, (BarVisualiser.__proto__ || Object.getPrototypeOf(BarVisualiser)).call(this, {
-            code: 'Ba',
-            name: 'Bars 3D',
-            fftSize: BAR_COUNT * 2,
-            smoothingTimeConstant: 0.9
-        }));
-    }
-
-    _createClass(BarVisualiser, [{
-        key: 'onInit',
-        value: function onInit(data) {
-            this.setupSceneAndCamera(data);
-            this.setupLights(data);
-            this.setupPlane(data);
-            this.setupBars(data);
-        }
-    }, {
-        key: 'setupSceneAndCamera',
-        value: function setupSceneAndCamera(data) {
-            this.scene = new THREE.Scene();
-            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
-            this.camera.position.set(0, 15, 17);
-            this.camera.rotation.x = -Math.PI / 4;
-            this.cameraPivot = new THREE.Object3D();
-            this.cameraPivot.add(this.camera);
-            this.cameraPivot.castShadow = true;
-            this.scene.add(this.cameraPivot);
-        }
-    }, {
-        key: 'setupLights',
-        value: function setupLights() {
-            var ambientLight = new THREE.AmbientLight(0x404040, 0.8);
-            this.scene.add(ambientLight);
-        }
-    }, {
-        key: 'setupPlane',
-        value: function setupPlane() {
-            var planeGeometry = new THREE.PlaneGeometry(200, 200, 1);
-            var planeMaterial = new THREE.MeshPhongMaterial({ color: 0x444444, side: THREE.DoubleSide });
-            var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.receiveShadow = true;
-            plane.rotation.x = Math.PI / 2;
-            this.scene.add(plane);
-        }
-    }, {
-        key: 'setupBars',
-        value: function setupBars() {
-            this.bars = [];
-            this.lights = [];
-            this.cubeLights = [];
-            var step = 2 * Math.PI / BAR_COUNT;
-            var geometry = new THREE.BoxGeometry(0.5, 10, 0.5);
-            var radius = 5;
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var color = 0xff0000 + i * 5;
-                var bar = new THREE.Object3D();
-                var material = new THREE.MeshLambertMaterial({ color: color });
-                var cube = new THREE.Mesh(geometry, material);
-                var cubeLight = new THREE.PointLight(color, 0, 4);
-                cubeLight.position.y = 7;
-                cubeLight.position.x = -1;
-                cube.add(cubeLight);
-                var light = new THREE.PointLight(color, 0, 10);
-                light.position.y = 1;
-                light.position.x = 10;
-                bar.add(light);
-                bar.add(cube);
-                bar.position.x = radius;
-                cube.position.y = -4.8;
-                var pivot = new THREE.Object3D();
-                pivot.rotation.y = step * i;
-                pivot.add(bar);
-                this.scene.add(pivot);
-                this.bars.push(cube);
-                this.lights.push(light);
-                this.cubeLights.push(cubeLight);
-            }
-        }
-    }, {
-        key: 'onUpdate',
-        value: function onUpdate(data) {
-            for (var i = 0; i < BAR_COUNT; i++) {
-                var bar = this.bars[i];
-                var light = this.lights[i];
-                var cubeLight = this.cubeLights[i];
-                var frequency = Math.abs(data.frequencyData[i]);
-                var timeDomain = data.timeDomainData[i];
-
-                var value = frequency * timeDomain;
-                if (value === Infinity || value === -Infinity) continue;
-                var newY = bar.position.y + (value - bar.position.y) / 30;
-                if (isNaN(newY)) continue;
-
-                light.intensity = Math.max(0, newY);
-                cubeLight.intensity = Math.max(0, newY) * 0.5;
-                bar.position.y = newY;
-            }
-            this.cameraPivot.rotation.y += 0.01;
-            data.renderer.render(this.scene, this.camera);
-        }
-    }, {
-        key: 'onResize',
-        value: function onResize(data) {
-            this.camera.aspect = data.width / data.height;
-            this.camera.updateProjectionMatrix();
-        }
-    }, {
-        key: 'onDestroy',
-        value: function onDestroy() {
-            delete this.scene;
-            delete this.camera;
-        }
-    }]);
-
-    return BarVisualiser;
-}(Visualiser);
-
-module.exports = BarVisualiser;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var Helper = __webpack_require__(16);
-
-/**
- * @abstract
- */
-
-var Visualiser = function (_Helper) {
-    _inherits(Visualiser, _Helper);
-
-    /**
-     * @param {object} data
-     * @param {string} data.code
-     * @param {string} data.name
-     * @param {int} data.fftSize
-     * @param {number} data.smoothingTimeConstant
-     */
-    function Visualiser(data) {
-        _classCallCheck(this, Visualiser);
-
-        var _this = _possibleConstructorReturn(this, (Visualiser.__proto__ || Object.getPrototypeOf(Visualiser)).call(this));
-
-        _this.code = data.code || 'UV';
-        _this.name = data.name || 'Untitled Visualiser';
-        _this.fftSize = data.fftSize || 128;
-        _this.smoothingTimeConstant = data.smoothingTimeConstant || 0;
-        _this.initialised = false;
-        _this.paused = false;
-        return _this;
-    }
-
-    /**
-     * @param {object} data
-     * @param {THREE.WebGLRenderer} data.renderer
-     * @param {number} data.height
-     * @param {number} data.width
-     */
-
-
-    _createClass(Visualiser, [{
-        key: 'init',
-        value: function init(data) {
-            this.onInit(data);
-            this.initialised = true;
-        }
-
-        /**
-         * @abstract
-         * @param {object} data
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {number} data.height
-         * @param {number} data.width
-         */
-        // eslint-disable-next-line
-
-    }, {
-        key: 'onInit',
-        value: function onInit(data) {
-            throw new Error('The \'onInit\' method was not defined on ' + this.name + '!');
-        }
-
-        /**
-         * @param {object} data
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {number} data.height
-         * @param {number} data.width
-         */
-
-    }, {
-        key: 'revive',
-        value: function revive(data) {
-            this.onRevive(data);
-            this.paused = false;
-        }
-
-        /**
-         * @abstract
-         * @param {object} data
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {number} data.height
-         * @param {number} data.width
-         */
-        // eslint-disable-next-line
-
-    }, {
-        key: 'onRevive',
-        value: function onRevive(data) {}
-
-        /**
-         * @param {object} data
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {Float32Array} data.frequencyData
-         * @param {Float32Array} data.timeDomainData
-         */
-
-    }, {
-        key: 'update',
-        value: function update(data) {
-            this.onUpdate(data);
-        }
-
-        /**
-         * @abstract
-         * @param {object} data
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {Float32Array} data.frequencyData
-         * @param {Float32Array} data.timeDomainData
-         */
-        // eslint-disable-next-line
-
-    }, {
-        key: 'onUpdate',
-        value: function onUpdate(data) {
-            throw new Error('The \'onUpdate\' method was not defined on ' + this.name + '!');
-        }
-
-        /**
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {number} data.height
-         * @param {number} data.width
-         */
-
-    }, {
-        key: 'resize',
-        value: function resize(data) {
-            this.onResize(data);
-        }
-
-        /**
-         * @abstract
-         * @param {THREE.WebGLRenderer} data.renderer
-         * @param {number} data.height
-         * @param {number} data.width
-         */
-        // eslint-disable-next-line
-
-    }, {
-        key: 'onResize',
-        value: function onResize(data) {}
-    }, {
-        key: 'pause',
-        value: function pause() {
-            this.onPause();
-            this.paused = true;
-        }
-
-        /**
-         * @abstract
-         */
-
-    }, {
-        key: 'onPause',
-        value: function onPause() {}
-    }, {
-        key: 'destroy',
-        value: function destroy() {
-            this.onDestroy();
-        }
-
-        /**
-         * @abstract
-         */
-
-    }, {
-        key: 'onDestroy',
-        value: function onDestroy() {
-            throw new Error('The \'onDestroy\' method was not defined on ' + this.name + '!');
-        }
-    }, {
-        key: 'error',
-        value: function error(message) {
-            // TODO: Draw error message on canvas
-            throw new Error(message);
-        }
-    }, {
-        key: 'isInitialised',
-        value: function isInitialised() {
-            return this.initialised;
-        }
-    }, {
-        key: 'isPaused',
-        value: function isPaused() {
-            return this.paused;
-        }
-    }]);
-
-    return Visualiser;
-}(Helper);
-
-module.exports = Visualiser;
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var Helper = function () {
-    function Helper() {
-        _classCallCheck(this, Helper);
-    }
-
-    _createClass(Helper, [{
-        key: "lerp",
-        value: function lerp(current, target, fraction) {
-            if (isNaN(target) || target === Infinity || target === -Infinity) return current;
-            return current + (target - current) * fraction;
-        }
-    }, {
-        key: "constrain",
-        value: function constrain(max, min, value) {
-            return Math.min(max, Math.max(min, value));
-        }
-    }]);
-
-    return Helper;
-}();
-
-module.exports = Helper;
-
-/***/ }),
-/* 17 */,
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var SourceTypes = {
-    URL: 'url',
-    FILE: 'file',
-    ARRAY_BUFFER: 'arrayBuffer'
-};
-
-var Track = function () {
-
-    /**
-     * @param {object} data
-     * @param {string|File} data.source
-     * @param {string} [data.title]
-     */
-    function Track(data) {
-        _classCallCheck(this, Track);
-
-        this.source = data.source;
-        this.title = data.title;
-        this.arrayBufferCache = null;
-        this.analyseSource();
-    }
-
-    _createClass(Track, [{
-        key: 'analyseSource',
-        value: function analyseSource() {
-            if (typeof this.source === 'string') {
-                this.sourceType = SourceTypes.URL;
-                this.title = this.title || decodeURIComponent(this.source.split('/').pop().replace(/\.[a-zA-Z0-9]+$/, ''));
-            } else if (this.source instanceof File) {
-                this.sourceType = SourceTypes.FILE;
-                this.title = this.title || this.source.name.replace(/\.[a-zA-Z0-9]+$/, '');
-            } else if (this.source instanceof ArrayBuffer) {
-                this.sourceType = SourceTypes.ARRAY_BUFFER;
-                this.title = this.title || 'Untitled';
-            } else {
-                throw new Error('\'Unsupported Track source type: ' + this.source);
-            }
-        }
-
-        /**
-         * @return {Promise.<ArrayBuffer>}
-         */
-
-    }, {
-        key: 'prepareArrayBuffer',
-        value: function prepareArrayBuffer() {
-            var _this = this;
-
-            if (this.arrayBufferCache) return Promise.resolve(this.arrayBufferCache);
-            switch (this.sourceType) {
-                case SourceTypes.URL:
-                    return window.fetch(this.source).then(function (response) {
-                        var arrayBuffer = response.arrayBuffer();
-                        _this.arrayBufferCache = arrayBuffer;
-                        return arrayBuffer;
-                    });
-                case SourceTypes.FILE:
-                    return new Promise(function (resolve, reject) {
-                        var reader = new window.FileReader();
-                        reader.onload = function (fileEvent) {
-                            var arrayBuffer = fileEvent.target.result;
-                            _this.arrayBufferCache = arrayBuffer;
-                            resolve(arrayBuffer);
-                        };
-                        reader.onerror = function (error) {
-                            reject(error);
-                        };
-                        reader.readAsArrayBuffer(_this.source);
-                    });
-                case SourceTypes.ARRAY_BUFFER:
-                    return Promise.resolve(this.source);
-                default:
-                    return Promise.reject(new Error('\'Unsupported track source type: ' + this.sourceType));
-            }
-        }
-    }]);
-
-    return Track;
-}();
-
-module.exports = Track;
-module.exports.SourceTypes = SourceTypes;
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-var Visualiser = __webpack_require__(15);
-
-var RING_COUNT = 16;
-
-var RingVisualiser = function (_Visualiser) {
-    _inherits(RingVisualiser, _Visualiser);
-
-    function RingVisualiser() {
-        _classCallCheck(this, RingVisualiser);
-
-        return _possibleConstructorReturn(this, (RingVisualiser.__proto__ || Object.getPrototypeOf(RingVisualiser)).call(this, {
-            code: 'Rn',
-            name: 'Rings 2D',
-            fftSize: RING_COUNT * 2,
-            smoothingTimeConstant: 0.9
-        }));
-    }
-
-    _createClass(RingVisualiser, [{
-        key: 'onInit',
-        value: function onInit(data) {
-            this.setupSceneAndCamera(data);
-            this.setupRings();
-        }
-    }, {
-        key: 'setupSceneAndCamera',
-        value: function setupSceneAndCamera(data) {
-            this.scene = new THREE.Scene();
-
-            this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
-            this.camera.position.z = 20;
-            this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-            this.scene.add(this.camera);
-        }
-    }, {
-        key: 'setupRings',
-        value: function setupRings() {
-            this.rings = [];
-            var hslStep = 1 / RING_COUNT;
-            for (var i = 0; i < RING_COUNT; i++) {
-                var radius = 2 + i;
-                var segments = 64;
-                var material = new THREE.LineBasicMaterial({ color: 0x0000ff * i });
-                material.color.setHSL(hslStep * i, 1, 0.5);
-                var geometry = new THREE.CircleGeometry(radius, segments);
-                var ring = new THREE.Line(geometry, material);
-                this.scene.add(ring);
-                this.rings.push(ring);
-            }
-        }
-    }, {
-        key: 'onUpdate',
-        value: function onUpdate(data) {
-            for (var i = 0; i < RING_COUNT; i++) {
-                var ring = this.rings[i];
-                var timeDomain = data.timeDomainData[i];
-                var frequency = Math.abs(data.frequencyData[i]);
-                var scale = this.lerp(ring.scale.x, frequency * timeDomain, 0.01);
-                scale = this.constrain(2, 0.5, scale);
-                ring.scale.set(scale, scale, scale);
-                ring.rotation.z += 0.002 * i;
-            }
-            data.renderer.render(this.scene, this.camera);
-        }
-    }, {
-        key: 'onResize',
-        value: function onResize(data) {
-            this.camera.aspect = data.width / data.height;
-            this.camera.updateProjectionMatrix();
-        }
-    }, {
-        key: 'onDestroy',
-        value: function onDestroy() {
-            delete this.scene;
-            delete this.camera;
-        }
-    }]);
-
-    return RingVisualiser;
-}(Visualiser);
-
-module.exports = RingVisualiser;
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * @author Timur Kuzhagaliyev <tim.kuzh@gmail.com>
- * @copyright 2017
- * @license GPL-3.0
- */
-
-var THREE = __webpack_require__(0);
-var elementResizeEvent = __webpack_require__(11);
-
-var Visualisers = __webpack_require__(2);
-
-var VisualisationCore = function () {
-
-    /**
-     * @param {object} data
-     * @param {Element} data.parentElement
-     * @param {boolean} data.useDefaultVisualisers
-     * @param {object} data.analyser
-     */
-    function VisualisationCore(data) {
-        _classCallCheck(this, VisualisationCore);
-
-        this.parentElement = data.parentElement;
-
-        this.frequencyDataArray = null;
-        this.analyser = data.analyser;
-
-        /**
-         * @callback visualiserListener
-         * @param {Track[]} visualisers
-         * @param {int} currentVisualiserIndex
-         */
-        /** @type {visualiserListener[]} */
-        this.listeners = [];
-
-        this.visualisers = data.useDefaultVisualisers ? this.prepareDefaultVisualisers() : [];
-        this.currentVisualiserIndex = -1;
-    }
-
-    _createClass(VisualisationCore, [{
-        key: 'prepareDefaultVisualisers',
-        value: function prepareDefaultVisualisers() {
-            var visualisers = [];
-            for (var key in Visualisers) {
-                if (!Visualisers.hasOwnProperty(key)) continue;
-                var visualiserClass = Visualisers[key];
-                visualisers.push(new visualiserClass());
-            }
-            return visualisers;
-        }
-    }, {
-        key: 'notifyListeners',
-        value: function notifyListeners() {
-            for (var i = 0; i < this.listeners.length; i++) {
-                var listener = this.listeners[i];
-                listener(this.visualisers, this.currentVisualiserIndex);
-            }
-        }
-
-        /**
-         * @param {visualiserListener} listener
-         */
-
-    }, {
-        key: 'addListener',
-        value: function addListener(listener) {
-            this.listeners.push(listener);
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'addVisualiser',
-        value: function addVisualiser(visualiser) {
-            this.visualisers.push(visualiser);
-        }
-    }, {
-        key: 'prepare',
-        value: function prepare() {
-            var width = this.parentElement.offsetWidth;
-            var height = this.parentElement.offsetHeight;
-
-            this.renderer = new THREE.WebGLRenderer();
-            this.renderer.setSize(width, height);
-            this.canvas = this.renderer.domElement;
-            this.parentElement.appendChild(this.canvas);
-        }
-    }, {
-        key: 'start',
-        value: function start() {
-            this.setupListeners();
-            this.renderLoop();
-            this.notifyListeners();
-        }
-
-        /**
-         * @param {int} index
-         */
-
-    }, {
-        key: 'useVisualiser',
-        value: function useVisualiser(index) {
-            var visualiser = this.visualisers[index];
-            if (visualiser) this.prepareVisualiser(visualiser);
-            if (this.visualiser) this.visualiser.pause();
-            this.currentVisualiserIndex = index;
-            this.visualiser = visualiser;
-            this.notifyListeners();
-        }
-
-        /**
-         * @param {Visualiser} visualiser
-         */
-
-    }, {
-        key: 'prepareVisualiser',
-        value: function prepareVisualiser(visualiser) {
-            this.analyser.fftSize = visualiser.fftSize;
-            this.analyser.smoothingTimeConstant = visualiser.smoothingTimeConstant;
-            this.frequencyDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            this.timeDomainDataArray = new Float32Array(this.analyser.frequencyBinCount);
-            var data = {
-                renderer: this.renderer,
-                width: this.canvas.clientWidth,
-                height: this.canvas.clientHeight
-            };
-            if (!visualiser.isInitialised()) visualiser.init(data);else if (visualiser.isPaused()) visualiser.revive(data);
-            visualiser.resize(data);
-        }
-    }, {
-        key: 'setupListeners',
-        value: function setupListeners() {
-            elementResizeEvent(this.parentElement, this.onParentResize.bind(this));
-        }
-    }, {
-        key: 'renderLoop',
-        value: function renderLoop() {
-            var _this = this;
-
-            if (this.visualiser) {
-                if (this.analyser) {
-                    this.analyser.getFloatFrequencyData(this.frequencyDataArray);
-                    this.analyser.getFloatTimeDomainData(this.timeDomainDataArray);
-                }
-                this.visualiser.update({
-                    renderer: this.renderer,
-                    frequencyData: this.frequencyDataArray,
-                    timeDomainData: this.timeDomainDataArray
-                });
-            } else {
-                // TODO: Display warning about no visualiser
-            }
-            setTimeout(function () {
-                requestAnimationFrame(_this.renderLoop.bind(_this));
-            }, 1000 / 30);
-        }
-    }, {
-        key: 'onParentResize',
-        value: function onParentResize() {
-            var width = this.parentElement.offsetWidth;
-            var height = this.parentElement.offsetHeight;
-            this.renderer.setSize(width, height);
-            if (this.visualiser) this.visualiser.resize({
-                renderer: this.renderer,
-                width: width,
-                height: height
-            });
-        }
-    }]);
-
-    return VisualisationCore;
-}();
-
-module.exports = VisualisationCore;
 
 /***/ })
 /******/ ]);
