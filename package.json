@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "watch": "webpack --watch",
     "examples": "http-server -c-1",
-    "precommit": "npm run build"
+    "precommit": "npm run build && git add ./dist/"
   },
   "repository": {
     "type": "git",
