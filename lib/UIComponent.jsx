@@ -60,7 +60,19 @@ class UIComponent extends Component {
 
     uploadAudioFile(event) {
         event.preventDefault();
+        if (!this.fileInput) return;
+        if (!this.fileInput.onchange) this.fileInput.onchange = this.addAudioFile.bind(this);
+        this.fileInput.click();
+    }
 
+    addAudioFile() {
+        let files = this.fileInput.files;
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            if (file.type.match(/audio.*/)) {
+                this.props.musicPlayer.addTrack(file);
+            }
+        }
     }
 
     getTrackList() {
@@ -73,7 +85,7 @@ class UIComponent extends Component {
                 let activeClass = isActive ? 'active' : '';
                 let symbol = isActive ? this.getPlaybackSymbol() : `#${i + 1}`;
                 trackComponents.push(<a href="#" alt={`Play track #${i + 1}`} onClick={this.playTrack.bind(this, i)}
-                               className={`akko-ui-container-list-item ${activeClass}`}>
+                                        className={`akko-ui-container-list-item ${activeClass}`}>
                     <span>{symbol}</span> {track.title}</a>);
             }
             return <div className="akko-ui-container-list">{trackComponents}</div>;
@@ -108,8 +120,9 @@ class UIComponent extends Component {
                 let isActive = this.state.currentVisualiserIndex === i;
                 let activeClass = isActive ? 'active' : '';
                 let symbol = visualiser.code;
-                visualiserComponents.push(<a href="#" alt={`Use visualiser #${i + 1}`} onClick={this.useVisualiser.bind(this, i)}
-                               className={`akko-ui-container-list-item ${activeClass}`}>
+                visualiserComponents.push(<a href="#" alt={`Use visualiser #${i + 1}`}
+                                             onClick={this.useVisualiser.bind(this, i)}
+                                             className={`akko-ui-container-list-item ${activeClass}`}>
                     <span>{symbol}</span> {visualiser.name}</a>);
             }
             return <div className="akko-ui-container-list">{visualiserComponents}</div>;
@@ -125,6 +138,7 @@ class UIComponent extends Component {
                     <div className="akko-ui-container-title">Player: {this.state.playerState}</div>
                     {this.getTrackList()}
                     <div className="akko-ui-add-tracks">
+                        <input ref={input => this.fileInput = input} type="file" style="display: none;"/>
                         <a href="#" alt="Add a track by URL" onClick={this.addTrackByUrl.bind(this)}>Add track by
                             URL</a> or <a href="#" alt="Upload an audio file" onClick={this.uploadAudioFile.bind(this)}>upload
                         audio file</a>

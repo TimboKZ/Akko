@@ -2206,6 +2206,20 @@ var UIComponent = function (_Component) {
         key: 'uploadAudioFile',
         value: function uploadAudioFile(event) {
             event.preventDefault();
+            if (!this.fileInput) return;
+            if (!this.fileInput.onchange) this.fileInput.onchange = this.addAudioFile.bind(this);
+            this.fileInput.click();
+        }
+    }, {
+        key: 'addAudioFile',
+        value: function addAudioFile() {
+            var files = this.fileInput.files;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (file.type.match(/audio.*/)) {
+                    this.props.musicPlayer.addTrack(file);
+                }
+            }
         }
     }, {
         key: 'getTrackList',
@@ -2274,7 +2288,8 @@ var UIComponent = function (_Component) {
                     var symbol = visualiser.code;
                     visualiserComponents.push(h(
                         'a',
-                        { href: '#', alt: 'Use visualiser #' + (i + 1), onClick: this.useVisualiser.bind(this, i),
+                        { href: '#', alt: 'Use visualiser #' + (i + 1),
+                            onClick: this.useVisualiser.bind(this, i),
                             className: 'akko-ui-container-list-item ' + activeClass },
                         h(
                             'span',
@@ -2297,6 +2312,8 @@ var UIComponent = function (_Component) {
     }, {
         key: 'render',
         value: function render() {
+            var _this2 = this;
+
             return h(
                 'div',
                 { className: 'akko-ui' },
@@ -2313,6 +2330,9 @@ var UIComponent = function (_Component) {
                     h(
                         'div',
                         { className: 'akko-ui-add-tracks' },
+                        h('input', { ref: function ref(input) {
+                                return _this2.fileInput = input;
+                            }, type: 'file', style: 'display: none;' }),
                         h(
                             'a',
                             { href: '#', alt: 'Add a track by URL', onClick: this.addTrackByUrl.bind(this) },
