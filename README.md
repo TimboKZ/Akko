@@ -17,7 +17,7 @@ The graphics component of Akko is based on [three.js](https://threejs.org/). Thi
 
 # API
 
-See the detailed [API reference](./API.md).
+See the detailed [API reference](https://github.com/TimboKZ/Akko/blob/master/API.md).
 
 # Examples
 
