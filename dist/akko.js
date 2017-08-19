@@ -1593,15 +1593,16 @@ var VisualisationCore = __webpack_require__(20);
 var UI = __webpack_require__(12);
 
 /**
- * @type {{containerId: string, useDefaultVisualisers: boolean}}
+ * @type {{containerId: string, useDefaultVisualisers: boolean, autoPlay: boolean}}
  */
 var defaultOptions = {
     containerId: 'akko',
-    useDefaultVisualisers: true
+    useDefaultVisualisers: true,
+    autoPlay: false
 };
 
 /**
- * @return {{containerId: string, useDefaultVisualisers: boolean}}
+ * @return {{containerId: string, useDefaultVisualisers: boolean, autoPlay: boolean}}
  */
 var mergeOptions = function mergeOptions() {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -1631,7 +1632,8 @@ var Akko = function () {
         if (!this.container) throw new Error('Could not find element with ID \'' + this.options.containerId + '\'!');
 
         this.musicPlayer = new MusicPlayer({
-            AudioContext: this.AudioContext
+            audioContext: new this.AudioContext(),
+            autoPlay: options.autoPlay
         });
         this.visCore = new VisualisationCore({
             parentElement: this.container,
@@ -1766,13 +1768,14 @@ var MusicPlayer = function () {
 
     /**
      * @param data
-     * @param data.AudioContext
+     * @param {AudioContext} data.audioContext
+     * @param {boolean} data.autoPlay
      */
     function MusicPlayer(data) {
         _classCallCheck(this, MusicPlayer);
 
-        /** @type {AudioContext} */
-        this.context = new data.AudioContext();
+        this.context = data.audioContext;
+        this.autoPlay = data.autoPlay;
         this.gain = this.context.createGain();
         this.gain.connect(this.context.destination);
         this.analyser = this.context.createAnalyser();
@@ -1827,7 +1830,8 @@ var MusicPlayer = function () {
     }, {
         key: 'start',
         value: function start() {
-            this.playNextTrack();
+            this.setState(PlayerStates.READY);
+            if (this.autoPlay) this.playNextTrack();
         }
     }, {
         key: 'playNextTrack',
@@ -1867,7 +1871,7 @@ var MusicPlayer = function () {
             if (this.playing) {
                 this.pause();
             } else {
-                this.play();
+                if (this.buffer === null) this.playNextTrack();else this.play();
             }
             return this.playing;
         }
