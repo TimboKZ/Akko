@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Custom visualiser example (ES5 version) | Akko Music Visualising Framework</title>
+
+        <!-- Make the page look a bit nicer (this does not affect Akko) -->
+        <link rel="stylesheet" href="./prettify.css"/>
+
+        <!-- Akko CSS -->
+        <link rel="stylesheet" href="../dist/akko.min.css"/>
+
+        <!-- Preparing Akko container for displaying inline -->
+        <style>
+            #akko {
+                height: 500px;
+            }
+        </style>
+
+    </head>
+    <body>
+
+        <h1>Custom Akko visualiser written in ES5.</h1>
+
+        <p>Check the page source code to see how the visualiser was implemented. In this example visualiser is defined
+            inline, but normally you would put it in a separate <code>.js</code> file. Additionally, this custom
+            visualiser
+            was implemented using EcmaScript 5.</p>
+
+        <p><a href="../index.html">Click here</a> to go back to Index page.</p>
+
+        <!-- Akko's container -->
+        <div id="akko"></div>
+
+        <!-- Akko's dependencies -->
+        <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/86/three.min.js"></script>
+
+        <!-- Akko JS -->
+        <script src="../dist/akko.js"></script>
+
+        <!-- Defining our visualiser and starting Akko -->
+        <script>
+            // Amount of cubes to draw, must be a power of 2 since we're using it for `fftSize` below
+            var CUBE_COUNT = 16;
+            function CustomVisualiser() {
+                Akko.Visualiser.call(this, {
+                    code: 'Cv',
+                    name: 'Custom Visualiser',
+                    fftSize: CUBE_COUNT * 2,
+                });
+            }
+            CustomVisualiser.prototype = Object.create(Akko.Visualiser.prototype);
+            CustomVisualiser.prototype.constructor = CustomVisualiser;
+            CustomVisualiser.prototype.onInit = function(data) {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+                this.camera.position.z = 10;
+                this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+                this.scene.add(this.camera);
+                this.cubes = [];
+                var geometry = new THREE.BoxGeometry(1, 1, 1);
+                var xOffset = -CUBE_COUNT / 2 + 0.5;
+                var hslStep = 1 / CUBE_COUNT;
+                for (var i = 0; i < CUBE_COUNT; i++) {
+                    var material = new THREE.MeshBasicMaterial({color: 0xffffff});
+                    material.color.setHSL(hslStep * i, 1, 0.5);
+                    var cube = new THREE.Mesh(geometry, material);
+                    cube.position.set(xOffset + i, 0, 0);
+                    this.scene.add(cube);
+                    this.cubes.push(cube);
+                }
+            };
+            CustomVisualiser.prototype.onUpdate = function(data) {
+                for (var i = 0; i < CUBE_COUNT; i++) {
+                    var cube = this.cubes[i];
+                    var frequency = data.frequencyData[i];
+                    var timeDomain = data.timeDomainData[i];
+                    cube.scale.y = this.lerp(cube.scale.y, frequency * timeDomain, 0.1);
+                }
+                data.renderer.render(this.scene, this.camera);
+            };
+            CustomVisualiser.prototype.onDestroy = function() {
+                delete this.scene;
+                delete this.camera;
+                delete this.cubes;
+            };
+
+
+            // Starting Akko and adding our visualiser.
+            var akko = new Akko({
+                useDefaultVisualisers: false,
+            });
+            akko.addVisualiser(new CustomVisualiser());
+            akko.addTrack('./audio/Fatal Force - Fan Girls.mp3');
+            akko.addTrack('./audio/Computer Music All-Stars - Albatross v2.mp3');
+            akko.start();
+        </script>
+
+    </body>
+</html>
