@@ -29,6 +29,14 @@ Example Akko setups are located in the `examples/` folder. If you have [Node.js]
 
 If you want to see what a simple Akko visualiser looks like, check out the `lib/visualisers/` folder. Examples there are pretty basic, but remember that you have all [three.js](https://threejs.org/) features at your disposal.
 
+# Features
+
+* Audio playback, analysis and control using Web Audio API.
+* Visualisation framework built on WebGL and three.js.
+* Visualiser selection menu allowing users to switch between multiple visualisers.
+* Simple visualiser abstraction that lets you publish your visualiser and use visualisers developed by others.
+* Real-time playlist allowing users to add tracks by URL, as a file upload or by drag & dropping a file into the visualiser. 
+
 # Getting started
 
 To try Akko, add it's JS and CSS files, as well as 2 of its external dependencies to your page. You might also have to set the height for Akko's container.
@@ -40,7 +48,7 @@ To try Akko, add it's JS and CSS files, as well as 2 of its external dependencie
 
 <!-- Akko files -->
 <link rel="stylesheet" href="path/to/akko.min.css"/>
-<script src="path/to/akko.js"></script>
+<script src="path/to/akko.min.js"></script>
 
 <!-- Set the height for Akko's container -->
 <style>
@@ -60,7 +68,7 @@ Then, inside the `<body>` of your page, create a `<div>` container and launch Ak
 </script>
 ```
 
-You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen.
+You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen. See [Examples](#examples) to learn how to define custom visualisers.
 
 Alternatively, if you're using Node.js for your project:
 

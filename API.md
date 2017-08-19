@@ -80,6 +80,18 @@ akko.addVisualiser(new MyVisualiser());
 akko.start();
 ```
 
+### Constructor
+
+#### `new Akko.Visualiser(options)`
+
+* `options`
+    * `options.code` - A 2 character long string to be used a shorthand for visualiser's name.
+    * `options.name` - The name of this visualiser, will be displayed in the visualiser selection menu.
+    * `options.fftSize` - Current visualiser's desired `fftSize` for [Web Audio API `AnalyserNode`](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/fftSize).
+    * `options.smoothingTimeConstant` - Current visualiser's desired `smoothingTimeConstant` for [Web Audio API `AnalyserNode`](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/smoothingTimeConstant).
+
+Should be called as `super(options)` in your code (see example above). `fftSize` and `smoothingTimeConstant` will be applied to the `AnalyserNode` every time the visualiser is initialised or revived, only need to declare them here.
+
 ### Abstract methods (must be overridden)
 
 #### `.onInit(data)`
