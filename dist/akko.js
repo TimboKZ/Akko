@@ -1,3 +1,4 @@
+/*! Akko v0.0.4 | (c) Timur Kuzhagaliyev | github.com/TimboKZ/Akko */
 var Akko =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache

@@ -4,11 +4,12 @@
   "description": "Music visualising framework based on WebGL and Web Audio API.",
   "main": "index.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack && MINIFY=true webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "watch": "webpack --watch",
-    "examples": "http-server -c-1"
+    "examples": "http-server -c-1",
+    "precommit": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -45,16 +46,17 @@
     "@types/three": "^0.84.19",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.1",
-    "babel-plugin-transform-jsx": "^2.0.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.6.0",
     "css-loader": "^0.28.4",
     "eslint": "^4.5.0",
     "extract-text-webpack-plugin": "^3.0.0",
     "http-server": "^0.10.0",
+    "husky": "^0.14.3",
     "nightmare": "^2.10.0",
     "node-sass": "^4.5.3",
     "sass-loader": "^6.0.6",
+    "uglifyjs-webpack-plugin": "^0.4.6",
     "webpack": "^3.5.5",
     "whatwg-fetch": "^2.0.3"
   }

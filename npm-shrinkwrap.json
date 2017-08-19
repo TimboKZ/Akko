@@ -687,12 +687,6 @@
       "integrity": "sha1-KrDJx/MJj6SJB3cruBP+QejeOg4=",
       "dev": true
     },
-    "babel-plugin-transform-jsx": {
-      "version": "2.0.0",
-      "resolved": "https://registry.npmjs.org/babel-plugin-transform-jsx/-/babel-plugin-transform-jsx-2.0.0.tgz",
-      "integrity": "sha1-sPlMcNCnIPwaXBWwquD+W6Sm8Ko=",
-      "dev": true
-    },
     "babel-plugin-transform-react-jsx": {
       "version": "6.24.1",
       "resolved": "https://registry.npmjs.org/babel-plugin-transform-react-jsx/-/babel-plugin-transform-react-jsx-6.24.1.tgz",
@@ -979,6 +973,12 @@
       "version": "1.7.0",
       "resolved": "https://registry.npmjs.org/chokidar/-/chokidar-1.7.0.tgz",
       "integrity": "sha1-eY5ol3gVHIB2tLNg5e3SjNortGg=",
+      "dev": true
+    },
+    "ci-info": {
+      "version": "1.0.0",
+      "resolved": "https://registry.npmjs.org/ci-info/-/ci-info-1.0.0.tgz",
+      "integrity": "sha1-3FKF8rTiUYIWg2gcOBwziPRuxTQ=",
       "dev": true
     },
     "cipher-base": {
@@ -2077,6 +2077,26 @@
       "integrity": "sha1-P5E2XKvmC3ftDruiS0VOPgnZWoI=",
       "dev": true
     },
+    "husky": {
+      "version": "0.14.3",
+      "resolved": "https://registry.npmjs.org/husky/-/husky-0.14.3.tgz",
+      "integrity": "sha512-e21wivqHpstpoiWA/Yi8eFti8E+sQDSS53cpJsPptPs295QTOQR0ZwnHo2TXy1XOpZFD9rPOd3NpmqTK6uMLJA==",
+      "dev": true,
+      "dependencies": {
+        "normalize-path": {
+          "version": "1.0.0",
+          "resolved": "https://registry.npmjs.org/normalize-path/-/normalize-path-1.0.0.tgz",
+          "integrity": "sha1-MtDkcvkf80VwHBWoMRAY07CpA3k=",
+          "dev": true
+        },
+        "strip-indent": {
+          "version": "2.0.0",
+          "resolved": "https://registry.npmjs.org/strip-indent/-/strip-indent-2.0.0.tgz",
+          "integrity": "sha1-XvjbKV0B5u1sv3qrlpmNeCJSe2g=",
+          "dev": true
+        }
+      }
+    },
     "iconv-lite": {
       "version": "0.4.18",
       "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.4.18.tgz",
@@ -2277,6 +2297,12 @@
       "version": "1.0.0",
       "resolved": "https://registry.npmjs.org/is-builtin-module/-/is-builtin-module-1.0.0.tgz",
       "integrity": "sha1-VAVy0096wxGfj3bDDLwbHgN6/74=",
+      "dev": true
+    },
+    "is-ci": {
+      "version": "1.0.10",
+      "resolved": "https://registry.npmjs.org/is-ci/-/is-ci-1.0.10.tgz",
+      "integrity": "sha1-9zkzayYyNlBhqdSCcM1WrjNpMY4=",
       "dev": true
     },
     "is-dotfile": {
