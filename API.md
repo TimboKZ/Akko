@@ -1,5 +1,11 @@
 # Akko v0.1.0 API reference
 
+Table of contents:
+
+* [`new Akko([options])`](#new-akkooptions)
+* [`Akko.visualisers`](#akkovisualisers)
+* [`Akko.Visualiser`](#akkovisualiser)
+
 ## `new Akko([options])`
 
 Creates a new instance of Akko. A single page can have multiple instances of Akko running at the same time, although this is not recommended. Example usage:
