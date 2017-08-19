@@ -2,7 +2,11 @@
 
 Music visualising framework based on WebGL and Web Audio API.
 
+> This project is still in active development, some APIs are likely to change. Please create [a new issue](https://github.com/TimboKZ/Akko/issues) if you find any bugs.
+
 # Examples
+
+![Akko custom visualiser example](https://s3-eu-central-1.amazonaws.com/foxypanda-ghost/2017/08/Akko-Custom-Visualiser.png)
 
 [(online demo)](https://demos.kawaiidesu.me/akko/)
 

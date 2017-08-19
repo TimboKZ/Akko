@@ -39,17 +39,16 @@
         <!-- Akko JS -->
         <script src="../dist/akko.js"></script>
 
-        <!-- Starting Akko -->
+        <!-- Defining our visualiser and starting Akko -->
         <script>
-            // Defining our visualiser
-            const BAR_COUNT = 16;
-
+            // Amount of cubes to draw, must be a power of 2 since we're using it for `fftSize` below
+            const CUBE_COUNT = 16;
             class CustomVisualiser extends Akko.Visualiser {
                 constructor() {
                     super({
                         code: 'Cv',
                         name: 'Custom Visualiser',
-                        fftSize: BAR_COUNT * 2,
+                        fftSize: CUBE_COUNT * 2,
                     });
                 }
 
@@ -61,9 +60,9 @@
                     this.scene.add(this.camera);
                     this.cubes = [];
                     let geometry = new THREE.BoxGeometry(1, 1, 1);
-                    let xOffset = -BAR_COUNT / 2 + 0.5;
-                    let hslStep = 1 / BAR_COUNT;
-                    for (let i = 0; i < BAR_COUNT; i++) {
+                    let xOffset = -CUBE_COUNT / 2 + 0.5;
+                    let hslStep = 1 / CUBE_COUNT;
+                    for (let i = 0; i < CUBE_COUNT; i++) {
                         let material = new THREE.MeshBasicMaterial({color: 0xffffff});
                         material.color.setHSL(hslStep * i, 1, 0.5);
                         let cube = new THREE.Mesh(geometry, material);
@@ -74,7 +73,7 @@
                 }
 
                 onUpdate(data) {
-                    for (let i = 0; i < BAR_COUNT; i++) {
+                    for (let i = 0; i < CUBE_COUNT; i++) {
                         let cube = this.cubes[i];
                         let frequency = data.frequencyData[i];
                         let timeDomain = data.timeDomainData[i];
@@ -90,6 +89,7 @@
                 }
             }
 
+            // Starting Akko and adding our visualiser.
             let akko = new Akko({
                 useDefaultVisualisers: false,
             });
