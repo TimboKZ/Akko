@@ -1924,8 +1924,9 @@ var MusicPlayer = function () {
                 source: source,
                 title: title
             });
-            this.trackList.push(track);
+            var length = this.trackList.push(track);
             this.notifyListeners();
+            if (this.playing) this.playTrack(length - 1);
         }
     }, {
         key: 'getAnalyser',
