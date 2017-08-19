@@ -1562,9 +1562,11 @@ module.exports = __webpack_require__(6);
  */
 
 var Akko = __webpack_require__(7);
+var Visualiser = __webpack_require__(15);
 var Visualisers = __webpack_require__(2);
 
 module.exports = Akko;
+module.exports.Visualiser = Visualiser;
 module.exports.visualisers = Visualisers;
 
 /***/ }),
@@ -1591,15 +1593,15 @@ var VisualisationCore = __webpack_require__(20);
 var UI = __webpack_require__(12);
 
 /**
- * @type {{containerId: string, useDefaultVisualizers: boolean}}
+ * @type {{containerId: string, useDefaultVisualisers: boolean}}
  */
 var defaultOptions = {
     containerId: 'akko',
-    useDefaultVisualizers: true
+    useDefaultVisualisers: true
 };
 
 /**
- * @return {{containerId: string, useDefaultVisualizers: boolean}}
+ * @return {{containerId: string, useDefaultVisualisers: boolean}}
  */
 var mergeOptions = function mergeOptions() {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -1633,7 +1635,7 @@ var Akko = function () {
         });
         this.visCore = new VisualisationCore({
             parentElement: this.container,
-            useDefaultVisualizers: this.options.useDefaultVisualizers,
+            useDefaultVisualisers: this.options.useDefaultVisualisers,
             analyser: this.musicPlayer.getAnalyser()
         });
     }
@@ -2996,7 +2998,7 @@ var VisualisationCore = function () {
     /**
      * @param {object} data
      * @param {Element} data.parentElement
-     * @param {boolean} data.useDefaultVisualizers
+     * @param {boolean} data.useDefaultVisualisers
      * @param {object} data.analyser
      */
     function VisualisationCore(data) {
@@ -3015,7 +3017,7 @@ var VisualisationCore = function () {
         /** @type {visualiserListener[]} */
         this.listeners = [];
 
-        this.visualisers = data.useDefaultVisualizers ? this.prepareDefaultVisualisers() : [];
+        this.visualisers = data.useDefaultVisualisers ? this.prepareDefaultVisualisers() : [];
         this.currentVisualiserIndex = -1;
     }
 

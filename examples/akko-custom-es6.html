@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Custom visualiser example | Akko Music Visualising Framework</title>
+
+        <!-- Make the page look a bit nicer (this does not affect Akko) -->
+        <link rel="stylesheet" href="./prettify.css"/>
+
+        <!-- Akko CSS -->
+        <link rel="stylesheet" href="../dist/akko.min.css"/>
+
+        <!-- Preparing Akko container for displaying inline -->
+        <style>
+            #akko {
+                height: 500px;
+            }
+        </style>
+
+    </head>
+    <body>
+
+        <h1>Custom Akko visualiser written in ES6.</h1>
+
+        <p>Check the page source code to see how the visualiser was implemented. In this example visualiser is defined
+            inline, but normally you would put it in a separate <code>.js</code> file. Additionally, this custom
+            visualiser
+            was implemented using EcmaScript 6.</p>
+
+        <p><a href="../index.html">Click here</a> to go back to Index page.</p>
+
+        <!-- Akko's container -->
+        <div id="akko"></div>
+
+        <!-- Akko's dependencies -->
+        <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/86/three.min.js"></script>
+
+        <!-- Akko JS -->
+        <script src="../dist/akko.js"></script>
+
+        <!-- Starting Akko -->
+        <script>
+            // Defining our visualiser
+            const BAR_COUNT = 16;
+
+            class CustomVisualiser extends Akko.Visualiser {
+                constructor() {
+                    super({
+                        code: 'Cv',
+                        name: 'Custom Visualiser',
+                        fftSize: BAR_COUNT * 2,
+                    });
+                }
+
+                onInit(data) {
+                    this.scene = new THREE.Scene();
+                    this.camera = new THREE.PerspectiveCamera(60, data.width / data.height, 0.1, 100);
+                    this.camera.position.z = 10;
+                    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+                    this.scene.add(this.camera);
+                    this.cubes = [];
+                    let geometry = new THREE.BoxGeometry(1, 1, 1);
+                    let xOffset = -BAR_COUNT / 2 + 0.5;
+                    let hslStep = 1 / BAR_COUNT;
+                    for (let i = 0; i < BAR_COUNT; i++) {
+                        let material = new THREE.MeshBasicMaterial({color: 0xffffff});
+                        material.color.setHSL(hslStep * i, 1, 0.5);
+                        let cube = new THREE.Mesh(geometry, material);
+                        cube.position.set(xOffset + i, 0, 0);
+                        this.scene.add(cube);
+                        this.cubes.push(cube);
+                    }
+                }
+
+                onUpdate(data) {
+                    for (let i = 0; i < BAR_COUNT; i++) {
+                        let cube = this.cubes[i];
+                        let frequency = data.frequencyData[i];
+                        let timeDomain = data.timeDomainData[i];
+                        cube.scale.y = this.lerp(cube.scale.y, frequency * timeDomain, 0.1);
+                    }
+                    data.renderer.render(this.scene, this.camera);
+                }
+
+                onDestroy() {
+                    delete this.scene;
+                    delete this.camera;
+                    delete this.cubes;
+                }
+            }
+
+            let akko = new Akko({
+                useDefaultVisualisers: false,
+            });
+            akko.addVisualiser(new CustomVisualiser());
+            akko.addTrack('./audio/Fatal Force - Fan Girls.mp3');
+            akko.addTrack('./audio/Computer Music All-Stars - Albatross v2.mp3');
+            akko.start();
+        </script>
+
+    </body>
+</html>
