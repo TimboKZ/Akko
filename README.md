@@ -1,9 +1,8 @@
 # ![Akko Music Visualising Framework](https://s3-eu-central-1.amazonaws.com/foxypanda-ghost/2017/08/akko.png)
 
-[![Join the chat at https://gitter.im/akko-vis/Lobby](https://badges.gitter.im/akko-vis/Lobby.svg)](https://gitter.im/akko-vis/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 [![npm](https://img.shields.io/npm/v/akko.svg)](https://www.npmjs.com/package/akko)
 [![npm](https://img.shields.io/npm/dt/akko.svg)](https://www.npmjs.com/package/akko)
+[![Join the chat at https://gitter.im/akko-vis/Lobby](https://badges.gitter.im/akko-vis/Lobby.svg)](https://gitter.im/akko-vis/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Music visualising framework based on WebGL and Web Audio API.
 
