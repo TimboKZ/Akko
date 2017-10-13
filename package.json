@@ -1,7 +1,7 @@
 {
   "name": "akko",
   "version": "0.1.0",
-  "description": "Music visualising framework based on WebGL and Web Audio API.",
+  "description": "Music visualisation framework based on WebGL and Web Audio API.",
   "main": "index.js",
   "scripts": {
     "build": "webpack && MINIFY=true webpack",
@@ -18,6 +18,9 @@
   "keywords": [
     "music",
     "webaudio",
+    "visualisation",
+    "visualization",
+    "visualizing",
     "visualizing",
     "visualizer",
     "browser",
