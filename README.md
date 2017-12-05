@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/akko.svg)](https://www.npmjs.com/package/akko)
 [![npm](https://img.shields.io/npm/dt/akko.svg)](https://www.npmjs.com/package/akko)
+[![jsDelivr](https://data.jsdelivr.com/v1/package/npm/akko/badge?style=rounded)](https://www.jsdelivr.com/package/npm/akko)
 [![Join the chat at https://gitter.im/akko-vis/Lobby](https://badges.gitter.im/akko-vis/Lobby.svg)](https://gitter.im/akko-vis/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Music visualisation framework based on WebGL and Web Audio API.
