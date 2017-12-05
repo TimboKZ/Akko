@@ -69,7 +69,7 @@ Then, inside the `<body>` of your page, create a `<div>` container and launch Ak
 </script>
 ```
 
-You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen. See [Examples](#examples) to learn how to define custom visualisers. You can also [ksDelivr CDN] to load Akko's files:
+You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen. See [Examples](#examples) to learn how to define custom visualisers. You can also [jsDelivr CDN](https://www.jsdelivr.com/package/npm/akko) to load Akko's files:
 
 Alternatively, if you're using Node.js for your project:
 
