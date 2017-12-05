@@ -47,7 +47,7 @@ To try Akko, add it's JS and CSS files, as well as 2 of its external dependencie
 <script src="https://cdn.jsdelivr.net/bluebird/latest/bluebird.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/86/three.min.js"></script>
 
-<!-- Akko files -->
+<!-- Akko's files via jsDelivr CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/akko@0.1.0/dist/akko.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/akko@0.1.0/dist/akko.min.js"></script>
 
@@ -69,7 +69,7 @@ Then, inside the `<body>` of your page, create a `<div>` container and launch Ak
 </script>
 ```
 
-You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen. See [Examples](#examples) to learn how to define custom visualisers. You can also [jsDelivr CDN](https://www.jsdelivr.com/package/npm/akko) to load Akko's files:
+You can now drag & drop an audio file into the visualiser to start playback. You could also use one of the input buttons in the menu in the top left of the screen. See [Examples](#examples) to learn how to define custom visualisers.
 
 Alternatively, if you're using Node.js for your project:
 
